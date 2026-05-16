@@ -1,0 +1,182 @@
+{
+  "users": [
+    {
+      "name": "KUSUMA",
+      "email": "prajwalangadi97@gmail.com",
+      "password": "$2a$10$zDIw8ZJMye3zEJzAIYlZZuEvRYkrsZFFS2WklA/7KCvw9ugcGL9Gm",
+      "_id": "mou46qbl-yup0i5en"
+    },
+    {
+      "name": "Test Farm",
+      "email": "test@farm.com",
+      "password": "$2a$10$ChBGP7GJL6O2XmeLQj./4.St.OWY2dFGpoXZX2cqZpYCCulGUFiB.",
+      "_id": "mov7swi6-daez4q4i"
+    },
+    {
+      "name": "Puskar",
+      "email": "pushkar.aids24@cmrit.ac.in",
+      "password": "$2a$10$O9xI/lkRKN/r7DNhFJY.iepUodlX.K1CQK3isftnBttD/2GzguWQe",
+      "_id": "mov7xxpi-3tz0l5v8"
+    },
+    {
+      "name": "pu",
+      "email": "p@gmail.com",
+      "password": "$2a$10$yC3c4T9n8g4xR8rOUfMP0urQOnKMxG368AQ.J1NYdPEZl4dHN.Wcu",
+      "_id": "movelmaw-vpnk129v"
+    },
+    {
+      "name": "Puskar",
+      "email": "prajwal1.cse24@gmail.com",
+      "password": "$2a$10$1/0L9HTrj0ILY0vEcgiqt.4aYx8HZKCW4M4bookE64m1/y.T/9SUi",
+      "_id": "movemnii-cc41grj3"
+    },
+    {
+      "name": "devraj",
+      "email": "praju@gmail.com",
+      "password": "$2a$10$luk3o8fEHRFn5wHk0OTTvegGsxqIsPCBsCAtLEnii/4g1fyhLQQem",
+      "_id": "movkw894-8af2jnnw"
+    },
+    {
+      "name": "kkkk",
+      "email": "dev@gmail.com",
+      "password": "$2a$10$ungjDJrXEZ0VLy8VEbD9yedSnnHQ8zngD/RnJ.MR/YprNMKYxdnNO",
+      "_id": "movng3cb-3levjap6"
+    },
+    {
+      "name": "Farm Manager",
+      "email": "manager@farm.com",
+      "password": "$2a$10$28aI.m0E6BC93lX/iNDntuixdYJljqsfllbBinrYP0XlpunMXIK3C",
+      "_id": "mow8mql9-yregf8l5"
+    },
+    {
+      "name": "Farm Admin",
+      "email": "farmdemo@test.com",
+      "password": "$2a$10$2MI.JXczWTnRYGGlcfrYR.ZwkQW2Fi.lt7sJIuuE958LC/G5Paw6C",
+      "_id": "mp2tghxw-fidprksj"
+    },
+    {
+      "name": "Demo Admin",
+      "email": "demo@farm.com",
+      "password": "$2a$10$bl7OAsfZ1NSYpPLGuKvhwODNVvtkSxaenhirZ.bnQb6SfASZ55K.a",
+      "_id": "mp2wqklx-pezzisoi"
+    },
+    {
+      "name": "prajwal",
+      "email": "prajwal@gmail.com",
+      "password": "$2a$10$069qI4FFzFKADMfKDydRfeTMclEl2Y4cQIBJ879uATpY5upUSZH2a",
+      "_id": "mp2yf4t9-10s3dbg5"
+    },
+    {
+      "name": "Test User",
+      "email": "user20260513003901@example.com",
+      "password": "$2a$10$5VVtdlL0.cbJCZAX4jHyluKDSRCQgYylQ1x4F9h.ncuPwvWDBxcV6",
+      "_id": "mp3080v6-ymjsnps5"
+    },
+    {
+      "name": "Auto Test",
+      "email": "autotest_1778613460129@farm.local",
+      "password": "$2a$10$vujhWdDs5H71/ucnSi6jOuhXf2zAohJmPbk.Ns0GsXz8ExCxjqRm2",
+      "_id": "mp30j563-ce9o4q8v"
+    },
+    {
+      "name": "Auto Test",
+      "email": "autotest_1778613479307@farm.local",
+      "password": "$2a$10$592NN.uRcwleLx9Kr/XZg.HkesuO2xQqXcAViu5tl6YetUAb7T0CC",
+      "_id": "mp30jjyf-p2twto5i"
+    },
+    {
+      "name": "Auto Debug",
+      "email": "debug_user_20260513_1@farm.local",
+      "password": "$2a$10$CfT69Q1.iLpsIbuBfUnfQ.8NVAoyrah/jxn4T2mgJ.minW0VDy7/i",
+      "_id": "mp3rzlh0-0kxyirrv"
+    },
+    {
+      "name": "PRAJWAL A N",
+      "email": "prajwal1.cse24@cmrit.ac.in",
+      "password": "$2a$10$UGYuPNP1sIYhvOJVq5UD2e2DpZNFYf8PGkSTXd9ENkGyYh0DvmXJu",
+      "_id": "mp3sf88s-wpaazmw9"
+    },
+    {
+      "name": "Debug User",
+      "email": "debugdemo@farm.local",
+      "password": "$2a$10$TnxqHBdtaqRUkEc.MLRcR.eV/Pw6rmvShbUQ4iIamm13mSrfRmn/6",
+      "_id": "mp6v6odv-e3si0wat"
+    },
+    {
+      "name": "devuu",
+      "email": "devaraj333@gmail.com",
+      "password": "$2a$10$YzH5RRHeWhPGbf7bUmPiXeom65od95xORB8416Uc3.Y7dFD8/wWfW",
+      "_id": "mp77nznn-aoc33mr8"
+    },
+    {
+      "name": "Test User",
+      "email": "tester+1778867652851@farm.local",
+      "password": "$2a$10$nAJKGH78DG.H1yha0Bep2OEw1irU/Vm8en1q93.2slUB.UOkQaZ5C",
+      "_id": "mp77vdqx-1tn006hi"
+    },
+    {
+      "name": "CI Tester",
+      "email": "ci-tester@local",
+      "password": "$2a$10$Co33uRHLbuY2KVxnw9C7HuqN7SofQOiNul5/nnTB87gTBc3uxnTSO",
+      "_id": "mp7wlirv-zjqp4r33"
+    },
+    {
+      "name": "Debug Temp",
+      "email": "debugtemp2026@farm.local",
+      "password": "$2a$10$2EUUoD9VpfNhR/DDNENtBORx1NlN.MDKBS02H7l1TgzQPoJg7dULm",
+      "_id": "mp8o32no-cfmdkrcb"
+    }
+  ],
+  "animals": [
+    {
+      "name": "dft",
+      "type": "Buffalo",
+      "age": 4,
+      "_id": "mov7zhuz-t2b4btjf"
+    },
+    {
+      "name": "milo",
+      "type": "cow",
+      "age": 4,
+      "_id": "mp3shq4k-uxwtv352"
+    },
+    {
+      "name": "Bessie",
+      "species": "Cow",
+      "status": "active",
+      "pen": "A1",
+      "_id": "mp77ve1k-d9bmlssk"
+    },
+    {
+      "name": "TestCow",
+      "species": "Cow",
+      "status": "active",
+      "pen": "C1",
+      "_id": "mp7wlisn-xn6hzt02"
+    },
+    {
+      "name": "Daisy",
+      "type": "Cattle",
+      "breed": "Holstein",
+      "gender": "Female",
+      "dob": "",
+      "weight": null,
+      "pen": "A2",
+      "tag": "C-204",
+      "status": "Healthy",
+      "temperature": 40.2,
+      "activityLevel": "Low",
+      "feedIntake": "Normal",
+      "imageUrl": "https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&w=300&q=60",
+      "lastChecked": "2026-05-16T18:16:49.755Z",
+      "species": "Cattle",
+      "_id": "mp8o4b52-o4evtk9e"
+    }
+  ],
+  "feeders": [],
+  "feedLogs": [],
+  "vaccinations": [],
+  "healthRecords": [],
+  "staff": [],
+  "notifications": []
+}

@@ -1,0 +1,45 @@
+name: Build and Deploy to Heroku
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build frontend (Vite)
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Copy frontend build into backend/public
+        run: |
+          rm -rf backend/public || true
+          mkdir -p backend/public
+          cp -r frontend/dist/* backend/public/
+
+      - name: Deploy backend to Heroku
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
+          heroku_email: ${{ secrets.HEROKU_EMAIL }}
+          usedocker: false
+          appdir: backend

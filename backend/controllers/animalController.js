@@ -1,11 +1,11 @@
-import Animal from "../models/Animal.js";
+import { addAnimal as storeAddAnimal, getAnimals as storeGetAnimals } from "../data/store.js";
 
 export const createAnimal = async (req, res) => {
-  const animal = await Animal.create(req.body);
+  const animal = await storeAddAnimal(req.body);
   res.json(animal);
 };
 
 export const getAnimals = async (req, res) => {
-  const animals = await Animal.find();
+  const animals = await storeGetAnimals();
   res.json(animals);
 };

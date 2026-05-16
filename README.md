@@ -76,6 +76,15 @@ npm run dev
 - `PATCH /api/feeders/:id`
 - `GET /api/feeds`
 - `POST /api/feeds`
+- `GET /api/vaccinations`
+- `POST /api/vaccinations`
+- `GET /api/health`
+- `POST /api/health`
+- `GET /api/staff`
+- `POST /api/staff`
+- `GET /api/notifications`
+- `POST /api/notifications`
+- `GET /api/alerts`
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 
@@ -99,3 +108,41 @@ Add screenshots here after capturing the dashboard in your browser:
 - If the frontend shows a blank page or 404, make sure you are starting the app from the project root with `npm run dev`.
 - If the backend does not start, confirm that MongoDB is running locally and that `backend/.env` contains a valid `MONGO_URI`.
 - If a feeder or animal does not appear after saving, refresh the dashboard or check the browser console for API errors.
+
+## Deployment
+
+Quick Docker-based deployment (builds frontend then serves from backend):
+
+1. Build and run locally with Docker Compose:
+
+```bash
+docker compose build --pull
+docker compose up -d
+```
+
+2. The app will be available on port 5000 (both API and frontend served by the backend).
+
+3. CI: A GitHub Actions workflow is provided at `.github/workflows/docker-build.yml` which will build and push a Docker image to Docker Hub when `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets are set.
+
+4. Heroku: a `Procfile` is included (`web: node backend/server.js`) — if you prefer Heroku, push the repo to a Heroku app and set environment variables.
+
+Notes:
+- The `Dockerfile` is multi-stage: it runs `npm run build` for the frontend and copies the result into `backend/public` so Express can serve it. Ensure your frontend build script is `npm run build` and produces `frontend/dist`.
+- If you need help configuring CI secrets or deploying to a specific host (Vercel, Render, Railway, or Azure), tell me which provider you prefer and I will prepare the exact steps or automation.
+
+### GitHub Actions → Heroku (automatic)
+
+This repository also includes a workflow you can use to build the frontend and deploy the backend to Heroku automatically when you push to `main`.
+
+Required repository Secrets (add these in GitHub Settings → Secrets):
+- `HEROKU_API_KEY` — your Heroku API key
+- `HEROKU_APP_NAME` — the target Heroku app name
+- `HEROKU_EMAIL` — your Heroku account email
+
+When these secrets are set, pushing to `main` will:
+1. Install dependencies
+2. Build the frontend (`frontend/dist`)
+3. Copy the static build into `backend/public`
+4. Deploy the `backend` folder to Heroku
+
+If you'd like, I can trigger a test deployment after you add the secrets (I won't ask you to share secrets here).
