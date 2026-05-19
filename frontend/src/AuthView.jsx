@@ -32,6 +32,18 @@ const AuthView = ({ onAuthSuccess }) => {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Invalid email or password. Check Login mode or register a new account.');
+        }
+
+        if (response.status === 400 && /email already exists/i.test(data?.message || '')) {
+          // Switch to login mode and show a friendly, actionable message instead of throwing
+          setAuthMode('login');
+          setAuthMessage('Email already exists — switched to Login. Please sign in with your password.');
+          setSavingAuth(false);
+          return;
+        }
+
         throw new Error(data?.message || 'Request failed with ' + response.status);
       }
 
@@ -91,7 +103,7 @@ const AuthView = ({ onAuthSuccess }) => {
         {authMessage && <div className='hint-box auth-message'>{authMessage}</div>}
 
         <div className='hint-box'>
-          Demo access works with any valid email and password. Register creates a real account in the local backend.
+          Use Login for an existing account or Register to create a new one in the local backend.
         </div>
       </section>
 

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import * as XLSX from "xlsx";
 import {
   Activity,
   AlertTriangle,
@@ -17,6 +18,7 @@ import {
   Moon,
   Plus,
   RefreshCcw,
+  Search,
   Settings,
   Sun,
   Syringe,
@@ -169,6 +171,56 @@ const getDiseaseRisk = (animal) => {
   return "Normal";
 };
 
+const getDiseaseRiskDetails = (animal) => {
+  const reasons = [];
+  const temperature = parseTemperature(animal);
+  const activity = String(animal?.activityLevel || "").toLowerCase();
+  const feedIntake = String(animal?.feedIntake || "").toLowerCase();
+  const status = String(animal?.status || "").toLowerCase();
+  let cause = "No strong warning signs detected";
+
+  if (temperature != null) {
+    if (temperature >= 40) {
+      reasons.push(`High fever (${temperature.toFixed(1)}°C)`);
+    } else if (temperature >= 39.3) {
+      reasons.push(`Elevated temperature (${temperature.toFixed(1)}°C)`);
+    }
+  }
+
+  if (["low", "very low", "none", "reduced"].includes(activity)) {
+    reasons.push("Low activity");
+  }
+
+  if (["low", "reduced", "poor"].includes(feedIntake)) {
+    reasons.push("Reduced feed intake");
+  }
+
+  if (["sick", "quarantine"].includes(status)) {
+    reasons.push(`Status marked ${animal?.status || "high risk"}`);
+  }
+
+  const hasFever = temperature != null && temperature >= 39.3;
+  const hasActivityIssue = ["low", "very low", "none", "reduced"].includes(activity);
+  const hasFeedIssue = ["low", "reduced", "poor"].includes(feedIntake);
+
+  if (hasFever && hasActivityIssue) {
+    cause = "Possible infection or fever-related illness";
+  } else if (hasFever && hasFeedIssue) {
+    cause = "Possible fever with appetite loss";
+  } else if (status === "sick" || status === "quarantine") {
+    cause = `Animal status is marked ${animal?.status || "high risk"}`;
+  } else if (reasons.length) {
+    cause = "Needs closer health monitoring";
+  }
+
+  if (!reasons.length) {
+    reasons.push("No strong warning signs detected");
+    cause = "Everything is good";
+  }
+
+  return { reasons, cause };
+};
+
 const formatTemperature = (temperature) => {
   if (temperature == null) {
     return "No data";
@@ -222,12 +274,40 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
     vaccinations = [],
     healthRecords = [],
     staff = [],
+    searchTerm = "",
+    setSearchTerm,
   } = app;
 
   const [flash, setFlash] = useState("");
   const [herdTab, setHerdTab] = useState("list");
   const [healthTab, setHealthTab] = useState("vacc");
   const [feedTab, setFeedTab] = useState("inventory");
+
+  const visibleAnimals = useMemo(() => {
+    const query = String(searchTerm || "").trim().toLowerCase();
+
+    if (!query) {
+      return animals;
+    }
+
+    return animals.filter((animal) => {
+      const haystack = [
+        animal.name,
+        animal.type,
+        animal.species,
+        animal.breed,
+        animal.pen,
+        animal.tag,
+        animal.status,
+        animal.gender,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(query);
+    });
+  }, [animals, searchTerm]);
 
   const [animalDraft, setAnimalDraft] = useState({
     name: "",
@@ -245,6 +325,8 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
     imageUrl: "",
     lastChecked: "",
   });
+  const [animalPhotoPreview, setAnimalPhotoPreview] = useState("");
+  const [animalPhotoFile, setAnimalPhotoFile] = useState(null);
 
   const [healthDraft, setHealthDraft] = useState({
     animalId: "",
@@ -329,10 +411,70 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
 
   const pageTitle = pageTitles[activeTab] || "FarmTrack Pro";
 
+  const handleAnimalPhotoChange = (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setFlash("Please select an image file.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setFlash("Animal photos must be 5MB or smaller.");
+      return;
+    }
+
+    setAnimalPhotoFile(file);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAnimalPhotoPreview(String(reader.result || ""));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearAnimalPhoto = () => {
+    setAnimalPhotoFile(null);
+    setAnimalPhotoPreview("");
+  };
+
+  const uploadAnimalPhoto = async (animalId, file) => {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await fetch(`/api/animals/${animalId}/photo`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(payload.message || `Photo upload failed with ${response.status}`);
+    }
+
+    return payload;
+  };
+
+  const exportWorkbook = (fileName, sheets) => {
+    const workbook = XLSX.utils.book_new();
+
+    sheets.forEach(({ name, headers, rows }) => {
+      const sheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      XLSX.utils.book_append_sheet(workbook, sheet, name);
+    });
+
+    XLSX.writeFile(workbook, `${fileName}-${Date.now()}.xlsx`);
+  };
+
   const submitAnimal = async (event) => {
     event.preventDefault();
     try {
-      await requestJson("/animals", {
+      const createdAnimal = await requestJson("/animals", {
         method: "POST",
         body: JSON.stringify({
           ...animalDraft,
@@ -342,6 +484,17 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
           lastChecked: animalDraft.lastChecked || new Date().toISOString(),
         }),
       });
+
+      let uploadWarning = "";
+
+      if (animalPhotoFile && createdAnimal?._id) {
+        try {
+          await uploadAnimalPhoto(createdAnimal._id, animalPhotoFile);
+        } catch (uploadError) {
+          uploadWarning = ` Animal photo saved later: ${uploadError.message}`;
+        }
+      }
+
       setAnimalDraft({
         name: "",
         type: "Cattle",
@@ -358,7 +511,8 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
         imageUrl: "",
         lastChecked: "",
       });
-      setFlash("Animal saved successfully.");
+      clearAnimalPhoto();
+      setFlash(`Animal saved successfully.${uploadWarning}`);
       await loadData?.();
       setHerdTab("list");
     } catch (error) {
@@ -538,8 +692,13 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
 
       <div className="split-grid">
         <SectionCard title="Recent Animals">
-          {animals.length ? (
-            animals.slice(0, 5).map((animal) => (
+          {visibleAnimals.length ? (
+            visibleAnimals.slice(0, 5).map((animal) => (
+              (() => {
+                const riskLabel = getDiseaseRisk(animal);
+                const riskDetails = getDiseaseRiskDetails(animal);
+
+                return (
               <div key={animal._id} className="row-item">
                 <div className="row-icon"><AnimalAvatar animal={animal} /></div>
                 <div className="row-main">
@@ -548,12 +707,21 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                 </div>
                 <div className="row-tags">
                   <span className={`temp-chip temp-${getTemperatureState(parseTemperature(animal))}`}>{formatTemperature(parseTemperature(animal))}</span>
-                  <StatusTag value={getDiseaseRisk(animal)} />
+                  <div className="risk-stack">
+                    <StatusTag value={riskLabel} />
+                    <small className={`risk-note ${riskLabel === "Normal" ? "risk-note-good" : ""}`}>
+                      {riskLabel === "Normal"
+                        ? `${riskDetails.cause} — ${riskDetails.reasons.join(", ")}`
+                        : `Why: ${riskDetails.cause}. Signs: ${riskDetails.reasons.join(", ")}`}
+                    </small>
+                  </div>
                 </div>
               </div>
+                );
+              })()
             ))
           ) : (
-            <div className="empty-state">No animals yet.</div>
+            <div className="empty-state">No animals match your search.</div>
           )}
         </SectionCard>
 
@@ -689,6 +857,25 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                 <span className="fl">Animal Image URL</span>
                 <input className="fi" value={animalDraft.imageUrl} onChange={(event) => setAnimalDraft((current) => ({ ...current, imageUrl: event.target.value }))} placeholder="https://..." />
               </label>
+              <div className="animal-photo-field">
+                <div className="fl">Profile Picture</div>
+                <div className="photo-upload-row">
+                  <div className="photo-preview">
+                    {animalPhotoPreview ? (
+                      <img src={animalPhotoPreview} alt="Selected animal" />
+                    ) : (
+                      <span>No photo selected</span>
+                    )}
+                  </div>
+                  <div className="photo-upload-controls">
+                    <input className="fi" type="file" accept="image/*" onChange={handleAnimalPhotoChange} />
+                    <div className="photo-note">PNG or JPG only, up to 5MB.</div>
+                    <button className="btn btn-outline" type="button" onClick={clearAnimalPhoto} disabled={!animalPhotoFile}>
+                      Clear Photo
+                    </button>
+                  </div>
+                </div>
+              </div>
               <button className="btn btn-primary" type="submit">
                 <Plus size={14} /> Register Animal
               </button>
@@ -713,7 +900,12 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {animals.length ? animals.map((animal) => (
+                  {visibleAnimals.length ? visibleAnimals.map((animal) => (
+                    (() => {
+                      const riskLabel = getDiseaseRisk(animal);
+                      const riskDetails = getDiseaseRiskDetails(animal);
+
+                      return (
                     <tr key={animal._id}>
                       <td>
                         <div className="animal-cell">
@@ -726,15 +918,26 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                       <td>{animal.dob || "—"}</td>
                       <td>{animal.weight ?? "—"} kg</td>
                       <td><span className={`temp-chip temp-${getTemperatureState(parseTemperature(animal))}`}>{formatTemperature(parseTemperature(animal))}</span></td>
-                      <td><StatusTag value={getDiseaseRisk(animal)} /></td>
+                      <td>
+                        <div className="risk-stack">
+                          <StatusTag value={riskLabel} />
+                          <small className={`risk-note ${riskLabel === "Normal" ? "risk-note-good" : ""}`}>
+                            {riskLabel === "Normal"
+                              ? `${riskDetails.cause} — ${riskDetails.reasons.join(", ")}`
+                              : `Why: ${riskDetails.cause}. Signs: ${riskDetails.reasons.join(", ")}`}
+                          </small>
+                        </div>
+                      </td>
                       <td>{animal.pen || "—"}</td>
                       <td><code className="inline-code">{animal.tag || "—"}</code></td>
                       <td><StatusTag value={animal.status || "Healthy"} /></td>
                     </tr>
+                      );
+                    })()
                   )) : (
                     <tr>
                       <td colSpan="10">
-                        <div className="empty-state">No animals found.</div>
+                        <div className="empty-state">No animals match your search.</div>
                       </td>
                     </tr>
                   )}
@@ -1116,9 +1319,14 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
           <strong>Herd Report</strong>
           <span>Animals and status</span>
         </div>
-        <button className="btn btn-outline" type="button" onClick={() => downloadCSV("herd_report.csv", [["Name", "Type", "Breed", "Gender", "DOB", "Weight", "Pen", "Tag", "Status"], ...animals.map((animal) => [animal.name, animal.type, animal.breed, animal.gender, animal.dob, animal.weight, animal.pen, animal.tag, animal.status])])}>
-          Download CSV
-        </button>
+        <div className="report-actions">
+          <button className="btn btn-outline" type="button" onClick={() => downloadCSV("herd_report.csv", [["Name", "Type", "Breed", "Gender", "DOB", "Weight", "Pen", "Tag", "Status"], ...animals.map((animal) => [animal.name, animal.type, animal.breed, animal.gender, animal.dob, animal.weight, animal.pen, animal.tag, animal.status])])}>
+            Download CSV
+          </button>
+          <button className="btn btn-primary" type="button" onClick={() => exportWorkbook("herd_report", [{ name: "Herd", headers: ["Name", "Type", "Breed", "Gender", "DOB", "Weight", "Pen", "Tag", "Status"], rows: animals.map((animal) => [animal.name, animal.type, animal.breed, animal.gender, animal.dob, animal.weight, animal.pen, animal.tag, animal.status]) }])}>
+            Export Excel
+          </button>
+        </div>
       </div>
 
       <div className="report-card">
@@ -1126,9 +1334,14 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
           <strong>Vaccination Report</strong>
           <span>History and pending</span>
         </div>
-        <button className="btn btn-outline" type="button" onClick={() => downloadCSV("vaccination_report.csv", [["Animal", "Vaccine", "Due Date", "Status"], ...vaccinations.map((vaccination) => [animalsById.get(String(vaccination.animalId || vaccination.animal?._id))?.name || "", vaccination.vaccineType || vaccination.vaccine, vaccination.dueDate || vaccination.next, vaccination.status])])}>
-          Download CSV
-        </button>
+        <div className="report-actions">
+          <button className="btn btn-outline" type="button" onClick={() => downloadCSV("vaccination_report.csv", [["Animal", "Vaccine", "Due Date", "Status"], ...vaccinations.map((vaccination) => [animalsById.get(String(vaccination.animalId || vaccination.animal?._id))?.name || "", vaccination.vaccineType || vaccination.vaccine, vaccination.dueDate || vaccination.next, vaccination.status])])}>
+            Download CSV
+          </button>
+          <button className="btn btn-primary" type="button" onClick={() => exportWorkbook("vaccination_report", [{ name: "Vaccination", headers: ["Animal", "Vaccine", "Due Date", "Status"], rows: vaccinations.map((vaccination) => [animalsById.get(String(vaccination.animalId || vaccination.animal?._id))?.name || "", vaccination.vaccineType || vaccination.vaccine, vaccination.dueDate || vaccination.next, vaccination.status]) }])}>
+            Export Excel
+          </button>
+        </div>
       </div>
 
       <div className="report-card">
@@ -1136,9 +1349,14 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
           <strong>Health Report</strong>
           <span>Treatment records</span>
         </div>
-        <button className="btn btn-outline" type="button" onClick={() => downloadCSV("health_report.csv", [["Animal", "Condition", "Treatment", "Date"], ...healthRecords.map((record) => [animalsById.get(String(record.animalId || record.animal?._id))?.name || "", record.condition, record.treatment || record.medicine, record.date])])}>
-          Download CSV
-        </button>
+        <div className="report-actions">
+          <button className="btn btn-outline" type="button" onClick={() => downloadCSV("health_report.csv", [["Animal", "Condition", "Treatment", "Date"], ...healthRecords.map((record) => [animalsById.get(String(record.animalId || record.animal?._id))?.name || "", record.condition, record.treatment || record.medicine, record.date])])}>
+            Download CSV
+          </button>
+          <button className="btn btn-primary" type="button" onClick={() => exportWorkbook("health_report", [{ name: "Health", headers: ["Animal", "Condition", "Treatment", "Date"], rows: healthRecords.map((record) => [animalsById.get(String(record.animalId || record.animal?._id))?.name || "", record.condition, record.treatment || record.medicine, record.date]) }])}>
+            Export Excel
+          </button>
+        </div>
       </div>
 
       <div className="report-card">
@@ -1146,8 +1364,44 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
           <strong>Feed Report</strong>
           <span>Inventory and consumption</span>
         </div>
-        <button className="btn btn-outline" type="button" onClick={() => downloadCSV("feed_report.csv", [["Location", "Status", "Feed Level", "Battery", "Schedule"], ...feeders.map((feeder) => [feeder.location, feeder.status, feeder.feedLevel, feeder.batteryLevel, feeder.schedule])])}>
-          Download CSV
+        <div className="report-actions">
+          <button className="btn btn-outline" type="button" onClick={() => downloadCSV("feed_report.csv", [["Location", "Status", "Feed Level", "Battery", "Schedule"], ...feeders.map((feeder) => [feeder.location, feeder.status, feeder.feedLevel, feeder.batteryLevel, feeder.schedule])])}>
+            Download CSV
+          </button>
+          <button className="btn btn-primary" type="button" onClick={() => exportWorkbook("feed_report", [{ name: "Feed", headers: ["Location", "Status", "Feed Level", "Battery", "Schedule"], rows: feeders.map((feeder) => [feeder.location, feeder.status, feeder.feedLevel, feeder.batteryLevel, feeder.schedule]) }])}>
+            Export Excel
+          </button>
+        </div>
+      </div>
+
+      <div className="report-card report-card-wide">
+        <div className="report-head">
+          <strong>Full Operations Pack</strong>
+          <span>One-click workbook for the whole farm</span>
+        </div>
+        <button className="btn btn-primary" type="button" onClick={() => exportWorkbook("farm_report", [
+          {
+            name: "Herd",
+            headers: ["Name", "Type", "Breed", "Gender", "DOB", "Weight", "Pen", "Tag", "Status"],
+            rows: animals.map((animal) => [animal.name, animal.type, animal.breed, animal.gender, animal.dob, animal.weight, animal.pen, animal.tag, animal.status]),
+          },
+          {
+            name: "Health",
+            headers: ["Animal", "Condition", "Treatment", "Date"],
+            rows: healthRecords.map((record) => [animalsById.get(String(record.animalId || record.animal?._id))?.name || "", record.condition, record.treatment || record.medicine, record.date]),
+          },
+          {
+            name: "Vaccination",
+            headers: ["Animal", "Vaccine", "Due Date", "Status"],
+            rows: vaccinations.map((vaccination) => [animalsById.get(String(vaccination.animalId || vaccination.animal?._id))?.name || "", vaccination.vaccineType || vaccination.vaccine, vaccination.dueDate || vaccination.next, vaccination.status]),
+          },
+          {
+            name: "Feed",
+            headers: ["Location", "Status", "Feed Level", "Battery", "Schedule"],
+            rows: feeders.map((feeder) => [feeder.location, feeder.status, feeder.feedLevel, feeder.batteryLevel, feeder.schedule]),
+          },
+        ])}>
+          Export Excel Pack
         </button>
       </div>
     </div>
@@ -1330,6 +1584,14 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
           </div>
 
           <div className="topbar-right">
+            <label className="topbar-search" aria-label="Search animals">
+              <Search size={14} />
+              <input
+                value={searchTerm}
+                onChange={(event) => setSearchTerm?.(event.target.value)}
+                placeholder="Search animals, tags, pens"
+              />
+            </label>
             <div className="date-badge">📅 {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</div>
             <button className="topbar-icon-button" type="button" onClick={() => loadData?.()} title="Refresh data">
               <RefreshCcw size={14} />

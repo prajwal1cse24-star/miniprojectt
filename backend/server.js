@@ -39,6 +39,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+app.use("/uploads", express.static(path.join(path.dirname(fileURLToPath(import.meta.url)), "uploads")));
 
 // Handle JSON parse errors from malformed requests
 app.use((err, req, res, next) => {
@@ -80,5 +81,28 @@ if (serveFrom) {
   });
 }
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 5000;
+const MAX_PORT_RETRIES = 5;
+
+function startServer(port, attemptsLeft) {
+  const server = app.listen(port, () => console.log(`Server running on port ${port}`));
+
+  server.on('error', (err) => {
+    if (err && err.code === 'EADDRINUSE') {
+      console.warn(`Port ${port} is already in use.`);
+      if (attemptsLeft > 0) {
+        const nextPort = port + 1;
+        console.log(`Trying port ${nextPort} (${attemptsLeft - 1} attempts left)...`);
+        // small delay before retrying to avoid tight loop
+        setTimeout(() => startServer(nextPort, attemptsLeft - 1), 250);
+        return;
+      }
+      console.error(`No available ports found after ${MAX_PORT_RETRIES} retries. Exiting.`);
+      process.exit(1);
+    }
+    console.error('Server error:', err);
+    process.exit(1);
+  });
+}
+
+startServer(DEFAULT_PORT, MAX_PORT_RETRIES);

@@ -59,10 +59,12 @@ export const getUsers = async () => {
 
 export const addUser = async (user) => {
   const db = await readDb();
-  if (db.users.some((existing) => existing.email === user.email)) {
+  const normalizedEmail = String(user.email || "").trim().toLowerCase();
+
+  if (db.users.some((existing) => String(existing.email || "").trim().toLowerCase() === normalizedEmail)) {
     throw new Error("Email already exists");
   }
-  const record = { ...user, _id: makeId() };
+  const record = { ...user, email: normalizedEmail, _id: makeId() };
   db.users.push(record);
   await writeDb(db);
   return record;
@@ -70,7 +72,8 @@ export const addUser = async (user) => {
 
 export const getUserByEmail = async (email) => {
   const db = await readDb();
-  return db.users.find((user) => user.email === email) || null;
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  return db.users.find((user) => String(user.email || "").trim().toLowerCase() === normalizedEmail) || null;
 };
 
 export const getAnimals = async () => {
@@ -80,10 +83,28 @@ export const getAnimals = async () => {
 
 export const addAnimal = async (animal) => {
   const db = await readDb();
-  const record = { ...animal, _id: makeId() };
+  const record = { ...animal, _id: makeId(), createdAt: animal.createdAt || new Date().toISOString() };
   db.animals.push(record);
   await writeDb(db);
   return record;
+};
+
+export const updateAnimalById = async (id, changes) => {
+  const db = await readDb();
+  const index = db.animals.findIndex((animal) => animal._id === id);
+
+  if (index === -1) {
+    return null;
+  }
+
+  db.animals[index] = {
+    ...db.animals[index],
+    ...changes,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await writeDb(db);
+  return db.animals[index];
 };
 
 export const getFeeders = async () => {

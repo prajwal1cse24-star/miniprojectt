@@ -8,7 +8,14 @@ const generateToken = (id) => {
 
 export const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const name = String(req.body?.name || "").trim();
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const password = String(req.body?.password || "");
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Name, email, and password are required" });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await addUser({ name, email, password: hashedPassword });
     res.json({ user, token: generateToken(user._id) });
@@ -19,12 +26,18 @@ export const register = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  const { email, password } = req.body;
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  const password = String(req.body?.password || "");
+
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
+
   const user = await getUserByEmail(email);
 
   if (user && (await bcrypt.compare(password, user.password))) {
     res.json({ user, token: generateToken(user._id) });
   } else {
-    res.status(401).json({ message: "Invalid credentials" });
+    res.status(401).json({ message: "Invalid email or password" });
   }
 };

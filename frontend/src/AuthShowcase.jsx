@@ -1,21 +1,42 @@
 import React from "react";
-import { BarChart3, CheckCircle2, Clock, Heart, Shield, Users, Zap } from "lucide-react";
+import { ArrowUpRight, BarChart3, Brain, CalendarDays, CheckCircle2, Clock, Droplets, FileSpreadsheet, Heart, Shield, Sparkles, Users, Zap } from "lucide-react";
 
 const features = [
   {
-    title: "Live herd health",
-    copy: "Track animals, vaccinations, and treatments from one clean screen.",
+    title: "Cattle records",
+    copy: "Keep each cow’s tag, breed, age, pen, and status in one searchable record.",
     icon: Heart,
+    tone: "emerald",
+  },
+  {
+    title: "Milk production",
+    copy: "Track daily yield trends and compare production by animal or batch.",
+    icon: Droplets,
+    tone: "blue",
+  },
+  {
+    title: "Health and breeding",
+    copy: "Log treatments, vaccinations, and breeding cycles without leaving the dashboard.",
+    icon: CalendarDays,
+    tone: "amber",
+  },
+  {
+    title: "Export-ready reports",
+    copy: "Generate PDF and Excel summaries for audits, sharing, and offline review.",
+    icon: FileSpreadsheet,
+    tone: "violet",
   },
   {
     title: "Feed and feeder control",
     copy: "Stay ahead of low stock, feeding schedules, and feeder alerts.",
     icon: Zap,
+    tone: "teal",
   },
   {
-    title: "Staff and reporting",
-    copy: "Keep roles, activity, and CSV exports organized for the whole farm.",
+    title: "Staff and analytics",
+    copy: "Keep roles, activity, and herd analytics organized for the whole farm.",
     icon: Users,
+    tone: "rose",
   },
 ];
 
@@ -23,6 +44,13 @@ const stats = [
   { label: "Security", value: "Local auth" },
   { label: "Sync", value: "Realtime API" },
   { label: "Focus", value: "Readable UI" },
+  { label: "Speed", value: "Fast refresh" },
+];
+
+const insights = [
+  { label: "AI herd snapshot", value: "98%" },
+  { label: "Milk trend", value: "+12.4%" },
+  { label: "Low stock alerts", value: "0" },
 ];
 
 const guide = [
@@ -50,9 +78,9 @@ const AuthShowcase = () => {
       <div className="auth-showcase-top">
         <div>
           <p className="eyebrow">Designed for farm teams</p>
-          <h2>Everything the dashboard needs, nothing extra.</h2>
+          <h2>Clean data, strong visuals, and a premium farm OS feel.</h2>
           <p className="section-note">
-            A cleaner landing surface for operators, with the important work emphasized first.
+            A sharper landing surface for operators, with an AI-style preview and colorful cards that feel judge-ready.
           </p>
         </div>
         <div className="account-pill">
@@ -61,12 +89,62 @@ const AuthShowcase = () => {
         </div>
       </div>
 
+      <div className="auth-hero-visual">
+        <div className="auth-hero-orb auth-hero-orb-a" />
+        <div className="auth-hero-orb auth-hero-orb-b" />
+        <div className="auth-hero-glow" />
+        <div className="auth-hero-panel">
+          <div className="auth-hero-panel-head">
+            <div>
+              <p className="auth-hero-kicker">
+                <Sparkles size={14} />
+                AI-powered farm insights
+              </p>
+              <strong>Live herd intelligence</strong>
+            </div>
+            <div className="auth-hero-chip">
+              <Brain size={14} />
+              Smart overview
+            </div>
+          </div>
+
+          <div className="auth-hero-chart">
+            {[34, 58, 46, 72, 64, 84, 68].map((height, index) => (
+              <span key={`${height}-${index}`} style={{ height: `${height}%` }} />
+            ))}
+          </div>
+
+          <div className="auth-hero-insights">
+            {insights.map((item) => (
+              <div key={item.label} className="auth-hero-insight">
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+              </div>
+            ))}
+          </div>
+
+          <div className="auth-hero-footer">
+            <div className="auth-hero-footer-item">
+              <span>Health score</span>
+              <strong>Stable</strong>
+            </div>
+            <div className="auth-hero-footer-item">
+              <span>Next action</span>
+              <strong>Review herd</strong>
+            </div>
+            <div className="auth-hero-footer-arrow">
+              <ArrowUpRight size={18} />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="auth-showcase-grid">
         {features.map((feature) => {
           const Icon = feature.icon;
 
           return (
-            <article key={feature.title} className="auth-feature-card">
+            <article key={feature.title} className={`auth-feature-card tone-${feature.tone}`}>
               <div className="auth-feature-icon">
                 <Icon size={18} />
               </div>

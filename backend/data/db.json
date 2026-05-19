@@ -125,6 +125,24 @@
       "email": "debugtemp2026@farm.local",
       "password": "$2a$10$2EUUoD9VpfNhR/DDNENtBORx1NlN.MDKBS02H7l1TgzQPoJg7dULm",
       "_id": "mp8o32no-cfmdkrcb"
+    },
+    {
+      "name": "pooja",
+      "email": "prah@gmail.com",
+      "password": "$2a$10$gqglnyu66NGkB2xY/syRUe8NXhvYzrc6BJJMm3bee3NueSOiM5S9a",
+      "_id": "mpb34t4f-tks1u242"
+    },
+    {
+      "name": "Debug User 2",
+      "email": "debuguser2_20260519@farm.local",
+      "password": "$2a$10$JHgH2LBX3E9oUbDaOgqleuQdku3yJxNmJIj.dWPmuB7wrb9jBbPjC",
+      "_id": "mpcvocdy-n9wq5jaz"
+    },
+    {
+      "name": "Live Debug User",
+      "email": "livecheck_20260519@farm.local",
+      "password": "$2a$10$Hhl.sWfTtg6PvFztA0jr/OtsxKmixdQ5Be92dAAqAOjGRXGcXKW36",
+      "_id": "mpcwnt7d-2vewic24"
     }
   ],
   "animals": [
