@@ -38,14 +38,29 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
+// Capture raw request body for better JSON parse error diagnostics
+app.use(
+  express.json({
+    limit: '10mb',
+    verify: (req, _res, buf) => {
+      try {
+        req.rawBody = buf && buf.toString && buf.toString();
+      } catch (e) {
+        req.rawBody = undefined;
+      }
+    },
+  })
+);
 app.use("/uploads", express.static(path.join(path.dirname(fileURLToPath(import.meta.url)), "uploads")));
 
 // Handle JSON parse errors from malformed requests
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
     console.error("Malformed JSON body:", err.message);
-    return res.status(400).json({ message: "Malformed JSON body" });
+    if (req && req.rawBody) {
+      console.error("Raw body was:", req.rawBody);
+    }
+    return res.status(400).json({ message: "Malformed JSON body", raw: req.rawBody ? String(req.rawBody).slice(0, 200) : undefined });
   }
   return next(err);
 });
