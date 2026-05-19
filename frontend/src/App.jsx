@@ -86,6 +86,8 @@ const formatDateTime = new Intl.DateTimeFormat("en-US", {
   minute: "2-digit",
 });
 
+const API_BASE = import.meta.env.VITE_BACKEND_URL || "";
+
 const requestJson = async (url, options = {}) => {
   const tokenLocal = localStorage.getItem("authToken");
   const headers = {
@@ -94,7 +96,9 @@ const requestJson = async (url, options = {}) => {
     ...(tokenLocal ? { Authorization: `Bearer ${tokenLocal}` } : {}),
   };
 
-  const response = await fetch(url, { ...options, headers });
+  const fullUrl = `${API_BASE}${url}`;
+
+  const response = await fetch(fullUrl, { ...options, headers });
 
   const payload = await response.json().catch(() => ({}));
 

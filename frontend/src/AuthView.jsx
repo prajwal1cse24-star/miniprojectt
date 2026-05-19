@@ -23,7 +23,9 @@ const AuthView = ({ onAuthSuccess }) => {
         ? { name: authForm.name.trim(), email: authForm.email.trim(), password: authForm.password }
         : { email: authForm.email.trim(), password: authForm.password };
 
-      const response = await fetch(path, {
+      const API_BASE = import.meta.env.VITE_BACKEND_URL || "";
+
+      const response = await fetch(`${API_BASE}${path}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

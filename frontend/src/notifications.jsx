@@ -53,9 +53,11 @@ export function useAlerts() {
       return undefined;
     }
 
+    const API_BASE = import.meta.env.VITE_BACKEND_URL || "";
+
     const fetchAlerts = async () => {
       try {
-        const response = await fetch("/api/alerts", {
+        const response = await fetch(`${API_BASE}/api/alerts`, {
           headers: tokenLocal ? { Authorization: `Bearer ${tokenLocal}` } : {},
         });
 

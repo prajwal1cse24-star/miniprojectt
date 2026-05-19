@@ -50,6 +50,8 @@ const pageTitles = {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+const API_BASE = import.meta.env.VITE_BACKEND_URL || "";
+
 const requestJson = async (path, options = {}) => {
   const headers = {
     "Content-Type": "application/json",
@@ -57,7 +59,7 @@ const requestJson = async (path, options = {}) => {
     ...(options.headers || {}),
   };
 
-  const response = await fetch(`/api${path}`, { ...options, headers });
+  const response = await fetch(`${API_BASE}/api${path}`, { ...options, headers });
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
