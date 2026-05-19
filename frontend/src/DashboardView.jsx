@@ -693,33 +693,33 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
       <div className="split-grid">
         <SectionCard title="Recent Animals">
           {visibleAnimals.length ? (
-            visibleAnimals.slice(0, 5).map((animal) => (
-              (() => {
-                const riskLabel = getDiseaseRisk(animal);
-                const riskDetails = getDiseaseRiskDetails(animal);
+            visibleAnimals.slice(0, 5).map((animal) => {
+              const riskLabel = getDiseaseRisk(animal);
+              const riskDetails = getDiseaseRiskDetails(animal);
 
-                return (
-              <div key={animal._id} className="row-item">
-                <div className="row-icon"><AnimalAvatar animal={animal} /></div>
-                <div className="row-main">
-                  <strong>{animal.name}</strong>
-                  <span>{getAnimalSpecies(animal)} {animal.pen ? `• ${animal.pen}` : ""}</span>
-                </div>
-                <div className="row-tags">
-                  <span className={`temp-chip temp-${getTemperatureState(parseTemperature(animal))}`}>{formatTemperature(parseTemperature(animal))}</span>
-                  <div className="risk-stack">
-                    <StatusTag value={riskLabel} />
-                    <small className={`risk-note ${riskLabel === "Normal" ? "risk-note-good" : ""}`}>
-                      {riskLabel === "Normal"
-                        ? `${riskDetails.cause} — ${riskDetails.reasons.join(", ")}`
-                        : `Why: ${riskDetails.cause}. Signs: ${riskDetails.reasons.join(", ")}`}
-                    </small>
+              return (
+                <div key={animal._id} className="animal-card">
+                  <div className="row-item">
+                    <div className="row-icon"><AnimalAvatar animal={animal} /></div>
+                    <div className="row-main">
+                      <strong>{animal.name}</strong>
+                      <span>{getAnimalSpecies(animal)} {animal.pen ? `• ${animal.pen}` : ""}</span>
+                    </div>
+                    <div className="row-tags">
+                      <span className={`temp-chip temp-${getTemperatureState(parseTemperature(animal))}`}>{formatTemperature(parseTemperature(animal))}</span>
+                      <div className="risk-stack">
+                        <StatusTag value={riskLabel} />
+                        <small className={`risk-note ${riskLabel === "Normal" ? "risk-note-good" : ""}`}>
+                          {riskLabel === "Normal"
+                            ? `${riskDetails.cause} — ${riskDetails.reasons.join(", ")}`
+                            : `Why: ${riskDetails.cause}. Signs: ${riskDetails.reasons.join(", ")}`}
+                        </small>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-                );
-              })()
-            ))
+              );
+            })
           ) : (
             <div className="empty-state">No animals match your search.</div>
           )}
