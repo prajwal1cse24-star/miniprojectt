@@ -207,15 +207,30 @@ function ReportChart({ feedLogs = [], days = 14 }) {
   });
 
   const data = Array.from(map.entries()).map(([date, value]) => ({ date, value }));
-  const hasData = data.some((d) => d.value && d.value > 0);
-  const renderData = hasData ? data : data.map((d, i) => ({ ...d, value: Math.round(Math.sin(i / Math.max(1, data.length / 6)) * 5 + 8 + (i % 3)) }));
+    const hasData = data.some((d) => d.value && d.value > 0);
+    const renderData = hasData ? data : data.map((d, i) => ({ ...d, value: Math.round(Math.sin(i / Math.max(1, data.length / 6)) * 5 + 8 + (i % 3)) }));
 
-  // Avoid ResponsiveContainer sizing issues by using a fixed pixel width computed from window
-  const safeWidth = (typeof window !== 'undefined') ? Math.max(360, Math.min(1000, window.innerWidth - 320)) : 600;
+  // Use ResizeObserver to measure container and avoid zero-size warnings
+  const containerRef = useRef(null);
+  const [size, setSize] = useState({ width: 600, height: 160 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = Math.max(300, Math.floor(entry.contentRect.width));
+        const h = Math.max(120, Math.floor(entry.contentRect.height || 160));
+        setSize({ width: w, height: h });
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   return (
-    <div style={{ width: '100%', height: 160 }}>
-      <LineChart width={safeWidth} height={160} data={renderData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+    <div ref={containerRef} style={{ width: '100%', height: 160 }}>
+      <LineChart width={size.width} height={size.height} data={renderData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="date" tickFormatter={(d) => d.slice(5)} />
         <YAxis />
@@ -405,6 +420,9 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
   const [herdTab, setHerdTab] = useState("list");
   const [healthTab, setHealthTab] = useState("vacc");
   const [feedTab, setFeedTab] = useState("inventory");
+
+  // report controls
+  const [reportRange, setReportRange] = useState(14);
 
   const visibleAnimals = useMemo(() => {
     const query = String(searchTerm || "").trim().toLowerCase();
