@@ -1818,8 +1818,15 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
           <span>Inventory and consumption</span>
         </div>
         <div className="report-actions">{/* Exports removed — show graphs/alerts only */}
-          <div style={{marginTop:8}}>
-            <ReportChart feedLogs={feedLogs} days={14} />
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {[7, 14, 30].map((d) => (
+                <button key={d} type="button" className={`btn ${reportRange === d ? 'btn-primary' : 'btn-outline'}`} onClick={() => setReportRange(d)}>{d}d</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ marginTop: 8 }}>
+            <ReportChart feedLogs={feedLogs} days={reportRange} />
           </div>
         </div>
       </div>
