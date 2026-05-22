@@ -73,9 +73,10 @@
     {
       "name": "prajwal",
       "email": "prajwal@gmail.com",
-      "password": "$2a$10$069qI4FFzFKADMfKDydRfeTMclEl2Y4cQIBJ879uATpY5upUSZH2a",
+      "password": "$2a$10$QbpC68KWy0VkBZS1MQYGTOoAvzsV8bUk4Ltmw3.afcHSJ52vq3x/y",
       "_id": "mp2yf4t9-10s3dbg5",
-      "farmerId": "prajwal"
+      "farmerId": "prajwal",
+      "role": "Admin"
     },
     {
       "name": "Test User",
@@ -358,6 +359,14 @@
       "_id": "mpfk5enq-vozrlyw0"
     },
     {
+      "name": "Admin User",
+      "farmerId": "admin",
+      "password": "$2a$10$usS47BoOCF4ghNO3Mlg2h.errRxvW60YIUqeHYhiXihYzXZf5iony",
+      "role": "Admin",
+      "email": "admin@farm.local",
+      "_id": "mp-admin-0000000000"
+    },
+    {
       "_id": "mpfkhmxc-iflw9a9o",
       "name": "Smoke User",
       "farmerId": "smoke-840",
@@ -380,6 +389,28 @@
       "email": "farmer999@farm.local",
       "role": "Staff",
       "_id": "mpgv3wz4-y9u36lnm"
+    },
+    {
+      "name": "viva",
+      "farmerId": "farmer002",
+      "email": "farmer002@farm.local",
+      "role": "Staff",
+      "_id": "mpgxjvbp-bul55wuk"
+    },
+    {
+      "name": "oja",
+      "farmerId": "farmer003",
+      "email": "farmer003@farm.local",
+      "role": "Staff",
+      "_id": "mph1g16f-96yxt94c"
+    },
+    {
+      "name": "Pushkar",
+      "farmerId": "9898",
+      "email": "9898@farm.local",
+      "password": "$2a$10$oZB4nZdVsLoOGEiqoajyBeecvhuikN4M0X1t6mUNb/8vvwUiKkXFC",
+      "role": "Staff",
+      "_id": "mph82ix2-rs3euwbi"
     }
   ],
   "animals": [
@@ -451,20 +482,104 @@
   ],
   "feeders": [],
   "feedLogs": [
-    { "_id": "log1", "animalId": "mp3shq4k-uxwtv352", "feederId": null, "quantity": 5, "date": "2026-05-09T08:00:00.000Z" },
-    { "_id": "log2", "animalId": "mp3shq4k-uxwtv352", "feederId": null, "quantity": 6, "date": "2026-05-11T08:00:00.000Z" },
-    { "_id": "log3", "animalId": "mp3shq4k-uxwtv352", "feederId": null, "quantity": 4, "date": "2026-05-13T08:00:00.000Z" },
-    { "_id": "log4", "animalId": "mp3shq4k-uxwtv352", "feederId": null, "quantity": 7, "date": "2026-05-15T08:00:00.000Z" },
-    { "_id": "log5", "animalId": "mp3shq4k-uxwtv352", "feederId": null, "quantity": 8, "date": "2026-05-17T08:00:00.000Z" },
-    { "_id": "log6", "animalId": "mp3shq4k-uxwtv352", "feederId": null, "quantity": 10, "date": "2026-05-19T08:00:00.000Z" },
-    { "_id": "log7", "animalId": "mp3shq4k-uxwtv352", "feederId": null, "quantity": 12, "date": "2026-05-22T08:00:00.000Z" },
-    { "_id": "log8", "animalId": "mov7zhuz-t2b4btjf", "feederId": null, "quantity": 3, "date": "2026-05-09T08:00:00.000Z" },
-    { "_id": "log9", "animalId": "mov7zhuz-t2b4btjf", "feederId": null, "quantity": 4, "date": "2026-05-11T08:00:00.000Z" },
-    { "_id": "log10", "animalId": "mov7zhuz-t2b4btjf", "feederId": null, "quantity": 6, "date": "2026-05-13T08:00:00.000Z" },
-    { "_id": "log11", "animalId": "mov7zhuz-t2b4btjf", "feederId": null, "quantity": 5, "date": "2026-05-15T08:00:00.000Z" },
-    { "_id": "log12", "animalId": "mov7zhuz-t2b4btjf", "feederId": null, "quantity": 7, "date": "2026-05-17T08:00:00.000Z" },
-    { "_id": "log13", "animalId": "mov7zhuz-t2b4btjf", "feederId": null, "quantity": 9, "date": "2026-05-19T08:00:00.000Z" },
-    { "_id": "log14", "animalId": "mov7zhuz-t2b4btjf", "feederId": null, "quantity": 11, "date": "2026-05-22T08:00:00.000Z" }
+    {
+      "_id": "log1",
+      "animalId": "mp3shq4k-uxwtv352",
+      "feederId": null,
+      "quantity": 5,
+      "date": "2026-05-09T08:00:00.000Z"
+    },
+    {
+      "_id": "log2",
+      "animalId": "mp3shq4k-uxwtv352",
+      "feederId": null,
+      "quantity": 6,
+      "date": "2026-05-11T08:00:00.000Z"
+    },
+    {
+      "_id": "log3",
+      "animalId": "mp3shq4k-uxwtv352",
+      "feederId": null,
+      "quantity": 4,
+      "date": "2026-05-13T08:00:00.000Z"
+    },
+    {
+      "_id": "log4",
+      "animalId": "mp3shq4k-uxwtv352",
+      "feederId": null,
+      "quantity": 7,
+      "date": "2026-05-15T08:00:00.000Z"
+    },
+    {
+      "_id": "log5",
+      "animalId": "mp3shq4k-uxwtv352",
+      "feederId": null,
+      "quantity": 8,
+      "date": "2026-05-17T08:00:00.000Z"
+    },
+    {
+      "_id": "log6",
+      "animalId": "mp3shq4k-uxwtv352",
+      "feederId": null,
+      "quantity": 10,
+      "date": "2026-05-19T08:00:00.000Z"
+    },
+    {
+      "_id": "log7",
+      "animalId": "mp3shq4k-uxwtv352",
+      "feederId": null,
+      "quantity": 12,
+      "date": "2026-05-22T08:00:00.000Z"
+    },
+    {
+      "_id": "log8",
+      "animalId": "mov7zhuz-t2b4btjf",
+      "feederId": null,
+      "quantity": 3,
+      "date": "2026-05-09T08:00:00.000Z"
+    },
+    {
+      "_id": "log9",
+      "animalId": "mov7zhuz-t2b4btjf",
+      "feederId": null,
+      "quantity": 4,
+      "date": "2026-05-11T08:00:00.000Z"
+    },
+    {
+      "_id": "log10",
+      "animalId": "mov7zhuz-t2b4btjf",
+      "feederId": null,
+      "quantity": 6,
+      "date": "2026-05-13T08:00:00.000Z"
+    },
+    {
+      "_id": "log11",
+      "animalId": "mov7zhuz-t2b4btjf",
+      "feederId": null,
+      "quantity": 5,
+      "date": "2026-05-15T08:00:00.000Z"
+    },
+    {
+      "_id": "log12",
+      "animalId": "mov7zhuz-t2b4btjf",
+      "feederId": null,
+      "quantity": 7,
+      "date": "2026-05-17T08:00:00.000Z"
+    },
+    {
+      "_id": "log13",
+      "animalId": "mov7zhuz-t2b4btjf",
+      "feederId": null,
+      "quantity": 9,
+      "date": "2026-05-19T08:00:00.000Z"
+    },
+    {
+      "_id": "log14",
+      "animalId": "mov7zhuz-t2b4btjf",
+      "feederId": null,
+      "quantity": 11,
+      "date": "2026-05-22T08:00:00.000Z"
+    }
   ],
   "vaccinations": [],
   "healthRecords": [],

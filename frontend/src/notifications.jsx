@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { AlertTriangle, AlertCircle, Bell, CheckCircle } from "lucide-react";
+import API_BASE from "./apiConfig.js";
 
 export function showNotification(message, type = "info", duration = 4000) {
   const options = {
@@ -52,8 +53,6 @@ export function useAlerts() {
     if (!tokenLocal) {
       return undefined;
     }
-
-    const API_BASE = import.meta.env.VITE_BACKEND_URL || "";
 
     const fetchAlerts = async () => {
       try {

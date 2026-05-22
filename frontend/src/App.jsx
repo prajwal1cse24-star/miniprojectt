@@ -37,7 +37,9 @@ import {
 } from "lucide-react";
 import ProtectedRoute from "./ProtectedRoute";
 import AuthView from "./AuthView";
+import AdminAuth from "./AdminAuth";
 import DashboardView from "./DashboardView";
+import API_BASE from "./apiConfig.js";
 import { NotificationToaster } from "./NotificationToast";
 import { useAlerts, showNotification } from "./notifications";
 
@@ -83,8 +85,6 @@ const formatDateTime = new Intl.DateTimeFormat("en-US", {
   hour: "numeric",
   minute: "2-digit",
 });
-
-const API_BASE = import.meta.env.VITE_BACKEND_URL || "";
 
 const requestJson = async (url, options = {}) => {
   const tokenLocal = localStorage.getItem("authToken");
@@ -642,7 +642,7 @@ function App() {
       <NotificationToaster />
       <Routes>
         <Route path="/login" element={!isAuthenticated ? <AuthView onAuthSuccess={handleAuthSuccess} /> : <Navigate to="/" replace />} />
-        <Route path="/admin-login" element={<Navigate to="/login" replace />} />
+        <Route path="/admin-login" element={!isAuthenticated ? <AdminAuth onAuthSuccess={handleAuthSuccess} /> : <Navigate to="/" replace />} />
         <Route
           path="/"
           element={

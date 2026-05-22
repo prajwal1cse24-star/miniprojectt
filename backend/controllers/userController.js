@@ -32,7 +32,7 @@ export const promoteUser = async (req, res) => {
 
 export const createUser = async (req, res) => {
   try {
-    const created = await storeCreateUserByAdmin(req.body || {});
+    const created = await storeCreateUserByAdmin({ ...req.body, password: String(req.body?.password || "") });
     return res.status(201).json(sanitizeUser(created));
   } catch (error) {
     return res.status(400).json({ message: error?.message || "Unable to create user" });

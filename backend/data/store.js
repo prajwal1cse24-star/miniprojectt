@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
+import bcrypt from "bcryptjs";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -116,6 +117,12 @@ export const getUserByEmail = async (email) => {
   return db.users.find((user) => String(user.email || "").trim().toLowerCase() === normalizedEmail) || null;
 };
 
+export const getUserByName = async (name) => {
+  const db = await readDb();
+  const normalizedName = String(name || "").trim().toLowerCase();
+  return db.users.find((user) => String(user.name || "").trim().toLowerCase() === normalizedName) || null;
+};
+
 export const getUserByFarmerId = async (farmerId) => {
   const db = await readDb();
   const normalizedFarmerId = String(farmerId || "").trim().toLowerCase();
@@ -162,6 +169,15 @@ export const updateUserRole = async (id, role) => {
   return db.users[index];
 };
 
+export const updateUserById = async (id, changes) => {
+  const db = await readDb();
+  const index = db.users.findIndex((u) => String(u._id) === String(id));
+  if (index === -1) return null;
+  db.users[index] = { ...db.users[index], ...changes };
+  await writeDb(db);
+  return db.users[index];
+};
+
 export const createUserByAdmin = async (user) => {
   const db = await readDb();
   const name = String(user.name || "").trim();
@@ -192,6 +208,7 @@ export const createUserByAdmin = async (user) => {
     status,
     phone,
     createdAt: new Date().toISOString(),
+    ...(user.password ? { password: await bcrypt.hash(String(user.password), 10) } : {}),
   };
 
   db.users.push(record);

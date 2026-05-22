@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import net from 'node:net';
 
 const backendPort = 5000;
@@ -86,6 +86,12 @@ process.on('exit', () => {
     }
   }
 });
+
+try {
+  execSync('npx kill-port 5000', { stdio: 'ignore' });
+} catch (killError) {
+  // Ignore if kill-port is not available or the port cannot be killed.
+}
 
 backendProcess = run(npmCommand, ['run', 'dev', '--prefix', 'backend']);
 backendProcess.on('exit', (code) => {

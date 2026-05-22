@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import * as Icons from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { showNotification } from "./notifications";
+import API_BASE from "./apiConfig.js";
 
 const { Activity, AlertTriangle, CircleAlert, Users, Settings, Bell, FileText, Archive, Edit2, Trash2, Heart, Coffee, BarChart2, UserPlus, LogOut, Search, RefreshCcw, Sun, Moon, CheckCircle, Syringe, Plus, Thermometer, Zap } = Icons;
 
@@ -18,8 +19,6 @@ const pageTitles = {
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
-
-const API_BASE = import.meta.env.VITE_BACKEND_URL || "";
 
 const requestJson = async (path, options = {}) => {
   const headers = {
@@ -535,6 +534,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
   const [staffDraft, setStaffDraft] = useState({
     name: "",
     farmerId: "",
+    password: "",
     role: "Staff",
     phone: "",
     status: "Active",
@@ -808,6 +808,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
         body: JSON.stringify({
           name: staffDraft.name,
           farmerId: staffDraft.farmerId,
+          password: staffDraft.password,
           role: staffDraft.role,
           phone: staffDraft.phone,
           status: staffDraft.status,
@@ -816,6 +817,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
       setStaffDraft({
         name: "",
         farmerId: "",
+        password: "",
         role: "Staff",
         phone: "",
         status: "Active",
@@ -1932,6 +1934,10 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
               <option>Active</option>
               <option>Inactive</option>
             </select>
+          </label>
+          <label className="fg">
+            <span className="fl">Password</span>
+            <input className="fi" type="password" value={staffDraft.password} onChange={(event) => setStaffDraft((current) => ({ ...current, password: event.target.value }))} placeholder="Set password for farmer" />
           </label>
           <label className="fg">
             <span className="fl">Phone</span>

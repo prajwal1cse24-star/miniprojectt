@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { addUser, getUserByEmail, getUserByFarmerId, updateUserRole, getUsers, getUserById } from "../data/store.js";
+import { addUser, getUserByEmail, getUserByFarmerId, getUserByName, updateUserById, updateUserRole, getUsers, getUserById } from "../data/store.js";
 
 const sanitizeUser = (user) => {
   if (!user) return user;
@@ -14,33 +14,23 @@ const generateToken = (id) => {
 
 export const register = async (req, res) => {
   try {
-    const name = String(req.body?.name || "").trim();
     const farmerId = String(req.body?.farmerId || "").trim().toLowerCase();
-    const email = String(req.body?.email || "").trim().toLowerCase();
-    const pin = String(req.body?.pin || "");
+    const name = String(req.body?.name || "").trim();
     const password = String(req.body?.password || "");
 
-    if (!name || !farmerId) {
-      return res.status(400).json({ message: "Name and Farmer ID are required" });
+    if (!farmerId || !name || !password) {
+      return res.status(400).json({ message: "Name, Farmer ID, and password are required" });
     }
 
-    // Keep internal email for compatibility even when UI does not ask for it.
-    const effectiveEmail = email || `${farmerId}@farm.local`;
-
-    // If caller provided a password, hash and store it so users may login with password.
-    let toCreate = { name, farmerId, email: effectiveEmail };
-    if (password) {
-      const hashed = await bcrypt.hash(password, 10);
-      toCreate.password = hashed;
+    const existing = (await getUserByFarmerId(farmerId)) || (await getUserByEmail(farmerId));
+    if (existing) {
+      return res.status(400).json({ message: "Farmer ID already exists" });
     }
 
-    const user = await addUser(toCreate);
-    res.json({ user: sanitizeUser(user), token: generateToken(user._id) });
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await addUser({ name, farmerId, password: hashed, role: "Farmer" });
+    return res.status(201).json({ user: sanitizeUser(user), token: generateToken(user._id) });
   } catch (err) {
-    const message = err?.message || "Registration failed";
-    if (!String(message).toLowerCase().includes("already exists")) {
-      console.error("Register error:", message);
-    }
     return res.status(400).json({ message: err?.message || "Registration failed" });
   }
 };
@@ -59,13 +49,14 @@ export const login = async (req, res) => {
     return res.status(401).json({ message: "Invalid Farmer ID" });
   }
 
-  // If password provided, validate it. Otherwise allow passwordless login (legacy behavior).
-  if (password) {
-    if (!user.password) {
-      return res.status(401).json({ message: "Password not set for this account" });
+  if (user.password) {
+    if (!password) {
+      return res.status(401).json({ message: "Password is required for this account" });
     }
     const match = await bcrypt.compare(password, String(user.password));
     if (!match) return res.status(401).json({ message: "Invalid Farmer ID or password" });
+  } else if (password) {
+    return res.status(401).json({ message: "Password not set for this account" });
   }
 
   res.json({ user: sanitizeUser(user), token: generateToken(user._id) });
@@ -73,20 +64,27 @@ export const login = async (req, res) => {
 
 export const adminLogin = async (req, res) => {
   try {
-    const farmerId = String(req.body?.farmerId || "").trim().toLowerCase();
+    const name = String(req.body?.name || "").trim();
     const password = String(req.body?.password || "");
+    const farmerId = String(req.body?.farmerId || "").trim().toLowerCase();
 
-    if (!farmerId || !password) {
-      return res.status(400).json({ message: "Farmer ID and password are required" });
+    if ((!name && !farmerId) || !password) {
+      return res.status(400).json({ message: "Admin name and password are required" });
     }
 
-    const user = await getUserByFarmerId(farmerId);
+    let user = null;
+    if (name) {
+      user = await getUserByName(name);
+    }
+    if (!user && farmerId) {
+      user = await getUserByFarmerId(farmerId);
+    }
     if (!user || !user.password || String(user.role || "").toLowerCase() !== "admin") {
       return res.status(404).json({ message: "Admin user not found or password not set" });
     }
 
     const match = await bcrypt.compare(password, String(user.password));
-    if (!match) return res.status(401).json({ message: "Invalid Farmer ID or password" });
+    if (!match) return res.status(401).json({ message: "Invalid admin name or password" });
 
     return res.json({ user: sanitizeUser(user), token: generateToken(user._id) });
   } catch (err) {
@@ -96,14 +94,20 @@ export const adminLogin = async (req, res) => {
 
 export const adminRegister = async (req, res) => {
   try {
-    const farmerId = String(req.body?.farmerId || "").trim().toLowerCase();
     const name = String(req.body?.name || "").trim();
     const password = String(req.body?.password || "");
     const adminPin = String(req.body?.adminPin || "");
 
-    if (!farmerId || !name || !password || !adminPin) {
-      return res.status(400).json({ message: "Farmer ID, name, password and admin PIN are required" });
+    if (!name || !password || !adminPin) {
+      return res.status(400).json({ message: "Admin name, password, and admin PIN are required" });
     }
+
+    const farmerId = name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 64) || `admin-${Date.now().toString(36)}`;
 
     const ADMIN_PIN = process.env.ADMIN_PIN || "admin123";
 

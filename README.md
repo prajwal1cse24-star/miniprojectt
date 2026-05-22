@@ -56,18 +56,14 @@ JWT_SECRET=abc123
 PORT=5000
 ```
 
-4. Registration PIN (local dev):
-
-```env
-REGISTER_PIN=1234
-```
-
-Only users who know the registration PIN can create new accounts from the frontend.
+4. User accounts must be created by an administrator from the backend admin UI or API. Self-registration through the frontend is disabled.
 
 Administrator registration and JWT guidance:
 
 - The first Admin account (bootstrap) can be created using `POST /api/auth/admin/register` with the `ADMIN_PIN` environment variable (default `admin123`).
 - After an Admin exists, creating additional Admin accounts requires an authenticated Admin token — `POST /api/auth/admin/register` must include an `Authorization: Bearer <token>` header from an Admin user.
+- Once an admin account is created, additional user accounts can be added by the admin and then signed into using the assigned Farmer ID.
+- Admins can also sign in at `/admin-login` using their Farmer ID and password.
 - Always set a stable `JWT_SECRET` in your environment for local development to avoid tokens becoming invalid after server restarts.
 
 ```env

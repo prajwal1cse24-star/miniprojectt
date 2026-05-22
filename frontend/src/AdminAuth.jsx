@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import API_BASE from './apiConfig.js';
 
 const AdminAuth = ({ onAuthSuccess }) => {
-  const [form, setForm] = useState({ farmerId: '', password: '' });
+  const [form, setForm] = useState({ name: '', password: '' });
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -16,9 +17,8 @@ const AdminAuth = ({ onAuthSuccess }) => {
     setLoading(true);
     setMessage('');
     try {
-      const API_BASE = import.meta.env.VITE_BACKEND_URL || "";
       const endpoint = '/api/auth/admin/login';
-      const body = { farmerId: form.farmerId.trim(), password: form.password };
+      const body = { name: form.name.trim(), password: form.password };
 
       const res = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
@@ -30,7 +30,7 @@ const AdminAuth = ({ onAuthSuccess }) => {
         throw new Error(data?.message || `Request failed ${res.status}`);
       }
       setMessage('Signed in as ' + (data.user?.name || data.user?.farmerId));
-      setForm({ farmerId: '', password: '' });
+      setForm({ name: '', password: '' });
       onAuthSuccess?.(data.token, data.user, fromPath);
     } catch (err) {
       setMessage('Admin login failed: ' + (err?.message || err));
@@ -50,17 +50,17 @@ const AdminAuth = ({ onAuthSuccess }) => {
 
         <form className='auth-form' onSubmit={submit}>
           <div className='hint-box' style={{ marginBottom: 16 }}>
-            Admin login requires a valid Farmer ID and password. Use this form to sign in with an existing admin account.
+            Admin login requires a valid admin name and password. Use this form to sign in with an existing admin account.
           </div>
 
           <label className='fg'>
-            <span className='fl'>Farmer ID</span>
-            <input name='farmerId' className='fi' value={form.farmerId} onChange={handleChange} placeholder='admin-id' required />
+            <span className='fl'>Admin Name</span>
+            <input name='name' className='fi' value={form.name} onChange={handleChange} placeholder='Admin name' required />
           </label>
 
           <label className='fg'>
             <span className='fl'>Password</span>
-            <input name='password' type='password' className='fi' value={form.password} onChange={handleChange} placeholder='password' required />
+            <input name='password' type='password' className='fi' value={form.password} onChange={handleChange} placeholder='Password' required />
           </label>
 
           <button className='btn btn-primary' type='submit' disabled={loading}>{loading ? 'Signing in...' : 'Sign in as Admin'}</button>
@@ -77,4 +77,4 @@ const AdminAuth = ({ onAuthSuccess }) => {
   );
 };
 
-export default React.memo(AdminAuth);
+export default React.memo(AdminAuth);   

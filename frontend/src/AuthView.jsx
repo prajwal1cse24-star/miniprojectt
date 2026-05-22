@@ -1,19 +1,27 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import API_BASE from './apiConfig.js';
+
 const AuthView = ({ onAuthSuccess }) => {
-  const [authMode, setAuthMode] = useState('login');
-  const [authForm, setAuthForm] = useState({ name: '', farmerId: '', pin: '' });
+  const [authForm, setAuthForm] = useState({ farmerId: '', password: '' });
   const [authMessage, setAuthMessage] = useState('');
   const [savingAuth, setSavingAuth] = useState(false);
+
+  const [registerForm, setRegisterForm] = useState({ name: '', farmerId: '', password: '' });
+  const [registerMessage, setRegisterMessage] = useState('');
+  const [registering, setRegistering] = useState(false);
 
   const handleAuthChange = (event) => {
     const { name, value } = event.target;
     setAuthForm((current) => ({ ...current, [name]: value }));
   };
 
-  const REGISTER_PIN = import.meta.env.VITE_REGISTER_PIN || "";
-  const isRegisterPinRequired = Boolean(REGISTER_PIN);
+  const handleRegisterChange = (event) => {
+    const { name, value } = event.target;
+    setRegisterForm((current) => ({ ...current, [name]: value }));
+  };
+
   const location = useLocation();
   const fromPath = location.state?.from?.pathname || '/';
 
@@ -23,43 +31,56 @@ const AuthView = ({ onAuthSuccess }) => {
     setAuthMessage('');
 
     try {
-      const path = authMode === 'register' ? '/api/auth/register' : '/api/auth/login';
-      const payload = authMode === 'register'
-        ? { name: authForm.name.trim(), farmerId: authForm.farmerId.trim(), pin: authForm.pin }
-        : { farmerId: authForm.farmerId.trim() };
-
-      const API_BASE = import.meta.env.VITE_BACKEND_URL || "";
-
-      const response = await fetch(`${API_BASE}${path}`, {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ farmerId: authForm.farmerId.trim(), password: authForm.password }),
       });
 
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Invalid Farmer ID.');
-        }
-
         throw new Error(data?.message || 'Request failed with ' + response.status);
       }
 
-      setAuthMessage(authMode === 'register' ? 'Registered ' + (data.user?.name || authForm.name) + '.' : 'Signed in as ' + (data.user?.name || data.user?.farmerId || authForm.farmerId) + '.');
-      setAuthForm({ name: '', farmerId: '', pin: '' });
+      setAuthMessage('Signed in as ' + (data.user?.name || data.user?.farmerId || authForm.farmerId) + '.');
+      setAuthForm({ farmerId: '', password: '' });
       onAuthSuccess(data.token, data.user, fromPath);
     } catch (error) {
       const message = String(error?.message || 'Authentication failed');
-      if (message.toLowerCase().includes('already exists')) {
-        setAuthMessage('This Farmer ID is already registered. Please sign in instead.');
-      } else if (message.toLowerCase().includes('invalid registration pin')) {
-        setAuthMessage('Invalid registration PIN. Please use the PIN provided by admin.');
-      } else {
-        setAuthMessage('Authentication failed: ' + message);
-      }
+      setAuthMessage('Authentication failed: ' + message);
     } finally {
       setSavingAuth(false);
+    }
+  };
+
+  const submitRegister = async (event) => {
+    event.preventDefault();
+    setRegistering(true);
+    setRegisterMessage('');
+
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: registerForm.name.trim(),
+          farmerId: registerForm.farmerId.trim().toLowerCase(),
+          password: registerForm.password,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.message || 'Request failed with ' + response.status);
+      }
+
+      setRegisterMessage('Account created. You can now sign in with your Farmer ID.');
+      setRegisterForm({ name: '', farmerId: '', password: '' });
+    } catch (error) {
+      setRegisterMessage('Registration failed: ' + String(error?.message || 'Unable to create account'));
+    } finally {
+      setRegistering(false);
     }
   };
 
@@ -77,32 +98,21 @@ const AuthView = ({ onAuthSuccess }) => {
           <div className='login-title'>FarmTrack Pro</div>
           <div className='login-sub'>Livestock Management System</div>
         </div>
-        <div className='auth-toggle-row'>
-          <button type='button' className={'auth-toggle ' + (authMode === 'login' ? 'active' : '')} onClick={() => setAuthMode('login')}>Login</button>
-          <button type='button' className={'auth-toggle ' + (authMode === 'register' ? 'active' : '')} onClick={() => setAuthMode('register')}>Register</button>
+        <div className='hint-box' style={{ marginBottom: 16 }}>
+          If you are an admin, use your admin name and password. Regular users sign in with their Farmer ID here.
         </div>
         <form className='auth-form' onSubmit={submitAuth}>
-          {authMode === 'register' && (
-            <label className='fg'>
-              <span className='fl'>Name</span>
-              <input className='fi' name='name' value={authForm.name} onChange={handleAuthChange} placeholder='Your name' required />
-            </label>
-          )}
-
           <label className='fg'>
             <span className='fl'>Farmer ID</span>
             <input className='fi' name='farmerId' value={authForm.farmerId} onChange={handleAuthChange} placeholder='e.g. farmer001' required />
           </label>
-
-          {authMode === 'register' && isRegisterPinRequired && (
-            <label className='fg'>
-              <span className='fl'>Registration PIN</span>
-              <input className='fi' name='pin' value={authForm.pin} onChange={handleAuthChange} placeholder='Enter PIN provided by admin' required />
-            </label>
-          )}
+          <label className='fg'>
+            <span className='fl'>Password</span>
+            <input className='fi' name='password' type='password' value={authForm.password} onChange={handleAuthChange} placeholder='Enter password if your account has one' />
+          </label>
 
           <button className='btn btn-primary auth-submit' type='submit' disabled={savingAuth}>
-            {savingAuth ? 'Processing...' : (authMode === 'register' ? 'Create account' : 'Sign in')}
+            {savingAuth ? 'Processing...' : 'Sign in'}
           </button>
         </form>
 
@@ -113,8 +123,40 @@ const AuthView = ({ onAuthSuccess }) => {
           </div>
         )}
         <div className='hint-box'>
-          Use your Farmer ID to sign in. {isRegisterPinRequired ? 'For new registration, use the valid PIN shared by admin.' : 'Enter your name and Farmer ID to register.'}
+          Already have a farmer account? Sign in using your Farmer ID and password.
         </div>
+        <div className='hint-box'>
+          <a href='/admin-login' style={{ color: 'var(--blue)', textDecoration: 'underline' }}>Admin login</a> is available if you need administrator access.
+        </div>
+      </section>
+
+      <section className='auth-card' style={{ marginTop: '24px' }}>
+        <div className='login-header'>
+          <div className='login-icon'>FR</div>
+          <div className='login-title'>Farmer Register</div>
+          <div className='login-sub'>Create a new farmer account</div>
+        </div>
+        <div className='hint-box' style={{ marginBottom: 16 }}>
+          Register with your name, Farmer ID and a password. Then sign in using Farmer ID.
+        </div>
+        <form className='auth-form' onSubmit={submitRegister}>
+          <label className='fg'>
+            <span className='fl'>Name</span>
+            <input className='fi' name='name' value={registerForm.name} onChange={handleRegisterChange} placeholder='Your full name' required />
+          </label>
+          <label className='fg'>
+            <span className='fl'>Farmer ID</span>
+            <input className='fi' name='farmerId' value={registerForm.farmerId} onChange={handleRegisterChange} placeholder='e.g. farmer001' required />
+          </label>
+          <label className='fg'>
+            <span className='fl'>Password</span>
+            <input className='fi' name='password' type='password' value={registerForm.password} onChange={handleRegisterChange} placeholder='Create a password' required />
+          </label>
+          <button className='btn btn-secondary auth-submit' type='submit' disabled={registering}>
+            {registering ? 'Registering...' : 'Create account'}
+          </button>
+        </form>
+        {registerMessage && <div className='hint-box auth-message'>{registerMessage}</div>}
       </section>
     </main>
   );
