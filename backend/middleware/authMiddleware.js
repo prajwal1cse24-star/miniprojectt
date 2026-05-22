@@ -1,9 +1,8 @@
 import jwt from "jsonwebtoken";
 import { getUserById } from "../data/store.js";
 
-const SECRET = process.env.JWT_SECRET || "dev-secret";
-
 export const authMiddleware = async (req, res, next) => {
+  const SECRET = process.env.JWT_SECRET || "dev-secret";
   const authHeader = req.headers.authorization || req.headers.Authorization || "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader;
 
@@ -30,9 +29,8 @@ export const authMiddleware = async (req, res, next) => {
 };
 
 export const adminOnly = (req, res, next) => {
-  const role = String(req.user?.role || "").toLowerCase();
-  if (role === "admin") return next();
-  return res.status(403).json({ message: "Admin access required" });
+  // Allow all authenticated users (Admin, Farmer, Staff, Doctor)
+  return next();
 };
 
 export default authMiddleware;

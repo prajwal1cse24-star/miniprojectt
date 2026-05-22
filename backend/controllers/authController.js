@@ -75,6 +75,12 @@ export const adminLogin = async (req, res) => {
     let user = null;
     if (name) {
       user = await getUserByName(name);
+      if (!user) {
+        user = await getUserByFarmerId(name.toLowerCase());
+      }
+      if (!user) {
+        user = await getUserByEmail(name.toLowerCase());
+      }
     }
     if (!user && farmerId) {
       user = await getUserByFarmerId(farmerId);

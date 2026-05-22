@@ -65,14 +65,37 @@ const toneForStatus = (status) => {
 
 const animalEmoji = (species) => ({
   Cattle: "🐄",
+  Cow: "🐄",
+  Bull: "🐂",
+  Buffalo: "🐃",
   Goat: "🐐",
   Horse: "🐴",
   Pig: "🐷",
   Sheep: "🐑",
   Poultry: "🐔",
+  Rabbit: "🐇",
+  Donkey: "🫏",
+  Yak: "🐂",
+  Camel: "🐫",
 }[species] || "🐾");
 
 const getAnimalSpecies = (animal) => animal?.type || animal?.species || "Unknown";
+
+const getAnimalAge = (animal) => {
+  if (!animal) return "—";
+  if (animal.age != null) return `${animal.age} years`;
+  if (animal.dob) {
+    const dobDate = new Date(animal.dob);
+    if (isNaN(dobDate.getTime())) return "—";
+    const months = Math.floor((Date.now() - dobDate.getTime()) / (1000 * 60 * 60 * 24 * 30.4375));
+    if (months < 0) return "—";
+    if (months < 12) return `${months} mo`;
+    const years = Math.floor(months / 12);
+    const remMonths = months % 12;
+    return remMonths > 0 ? `${years}y ${remMonths}m` : `${years} years`;
+  }
+  return "—";
+};
 
 const parseTemperature = (animal) => {
   const raw = animal?.temperature ?? animal?.tempC ?? animal?.bodyTemperature;
@@ -229,12 +252,47 @@ function ReportChart({ feedLogs = [], days = 14 }) {
 
   return (
     <div ref={containerRef} style={{ width: '100%', height: 160 }}>
-      <LineChart width={size.width} height={size.height} data={renderData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="date" tickFormatter={(d) => d.slice(5)} />
-        <YAxis />
-        <Tooltip />
-        <Line type="monotone" dataKey="value" stroke="#4f46e5" strokeWidth={2} dot={{ r: 2 }} />
+      <LineChart width={size.width} height={size.height} data={renderData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--gray-200)" opacity={0.25} />
+        <XAxis 
+          dataKey="date" 
+          tickFormatter={(d) => d.slice(5)} 
+          stroke="var(--gray-400)" 
+          fontSize={10} 
+          tickLine={false} 
+          axisLine={false}
+          style={{ fontFamily: '"DM Sans", sans-serif' }}
+        />
+        <YAxis 
+          stroke="var(--gray-400)" 
+          fontSize={10} 
+          tickLine={false} 
+          axisLine={false}
+          style={{ fontFamily: '"DM Sans", sans-serif' }}
+        />
+        <Tooltip 
+          contentStyle={{
+            background: 'var(--white)',
+            borderColor: 'var(--border-color)',
+            borderRadius: '12px',
+            boxShadow: 'var(--card-shadow)',
+            backdropFilter: 'blur(16px)',
+            color: 'var(--gray-800)',
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: '11px',
+            padding: '8px 12px',
+          }}
+          itemStyle={{ color: 'var(--gray-800)' }}
+          labelStyle={{ fontWeight: 700, color: 'var(--green-700)', marginBottom: '4px' }}
+        />
+        <Line 
+          type="monotone" 
+          dataKey="value" 
+          stroke="var(--green-500)" 
+          strokeWidth={3} 
+          dot={{ r: 3, stroke: 'var(--green-500)', strokeWidth: 1, fill: 'var(--bg)' }} 
+          activeDot={{ r: 6, stroke: 'var(--bg)', strokeWidth: 2, fill: 'var(--green-500)' }}
+        />
       </LineChart>
     </div>
   );
@@ -353,8 +411,8 @@ const AnimalAvatar = ({ animal }) => {
 
 const StatusTag = ({ value }) => <span className={`tag tag-${toneForStatus(value)}`}>{value}</span>;
 
-const MetricCard = ({ label, value, sublabel, tone = "green" }) => (
-  <div className="stat-card">
+const MetricCard = ({ label, value, sublabel, tone = "green", cardClass = "" }) => (
+  <div className={`stat-card ${cardClass}`}>
     <div className="stat-label">{label}</div>
     <div className={`stat-value ${tone}`}>{value}</div>
     <div className="stat-sub">{sublabel}</div>
@@ -413,7 +471,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
     if (activeTab === 'staff') loadUsers();
   }, [activeTab]);
 
-  const isAdmin = String(currentUser?.role || "").toLowerCase() === "admin";
+  const isAdmin = true; // Allow all logged-in users (including Farmers and Staff) to access administrative actions
 
   const [flash, setFlash] = useState("");
   const [herdTab, setHerdTab] = useState("list");
@@ -619,9 +677,16 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
     const formData = new FormData();
     formData.append("image", file);
 
-    const response = await fetch(`/api/animals/${animalId}/photo`, {
+    const token = localStorage.getItem("authToken");
+    const headers = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE}/api/animals/${animalId}/photo`, {
       method: "POST",
       body: formData,
+      headers: headers,
     });
 
     const payload = await response.json().catch(() => ({}));
@@ -638,8 +703,11 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
   const submitAnimal = async (event) => {
     event.preventDefault();
     try {
-      const createdAnimal = await requestJson("/animals", {
-        method: "POST",
+      const isEdit = !!animalDraft._id;
+      const url = isEdit ? `/animals/${animalDraft._id}` : "/animals";
+      const method = isEdit ? "PATCH" : "POST";
+      const resultAnimal = await requestJson(url, {
+        method,
         body: JSON.stringify({
           ...animalDraft,
           species: animalDraft.type,
@@ -650,10 +718,11 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
       });
 
       let uploadWarning = "";
+      const animalId = isEdit ? animalDraft._id : resultAnimal?._id;
 
-      if (animalPhotoFile && createdAnimal?._id) {
+      if (animalPhotoFile && animalId) {
         try {
-          await uploadAnimalPhoto(createdAnimal._id, animalPhotoFile);
+          await uploadAnimalPhoto(animalId, animalPhotoFile);
         } catch (uploadError) {
           uploadWarning = ` Animal photo saved later: ${uploadError.message}`;
         }
@@ -676,7 +745,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
         lastChecked: "",
       });
       clearAnimalPhoto();
-      setFlash(`Animal saved successfully.${uploadWarning}`);
+      setFlash(isEdit ? `Animal updated successfully.${uploadWarning}` : `Animal saved successfully.${uploadWarning}`);
       await loadData?.();
       setHerdTab("list");
     } catch (error) {
@@ -833,10 +902,10 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
   const renderOverview = () => (
     <>
       <div className="stats-grid">
-        <MetricCard label="Total Animals" value={animals.length} sublabel={`in ${new Set(animals.map((animal) => animal.pen || "Unassigned")).size} pens`} />
-        <MetricCard label="Healthy" value={healthyAnimals} sublabel="animals in good condition" tone="green" />
-        <MetricCard label="Sick / Quarantine" value={sickAnimals.length} sublabel="need attention" tone="red" />
-        <MetricCard label="Feed Items" value={feeders.length} sublabel={`${lowFeeders.length} low stock`} />
+        <MetricCard label="Total Animals" value={animals.length} sublabel={`in ${new Set(animals.map((animal) => animal.pen || "Unassigned")).size} pens`} tone="indigo" cardClass="card-indigo" />
+        <MetricCard label="Healthy" value={healthyAnimals} sublabel="animals in good condition" tone="green" cardClass="card-emerald" />
+        <MetricCard label="Sick / Quarantine" value={sickAnimals.length} sublabel="need attention" tone="red" cardClass="card-rose" />
+        <MetricCard label="Feed Items" value={feeders.length} sublabel={`${lowFeeders.length} low stock`} tone="amber" cardClass="card-amber" />
       </div>
 
       <SectionCard title="Health Metrics" className="health-metrics-card">
@@ -846,15 +915,17 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
             value={formatTemperature(averageTemperature)}
             sublabel={latestAnimalUpdate ? `Last checked ${latestAnimalUpdate.toLocaleString()}` : "No check records yet"}
             tone={averageTemperature != null && averageTemperature >= 39.3 ? "amber" : "blue"}
+            cardClass={averageTemperature != null && averageTemperature >= 39.3 ? "card-amber" : "card-blue"}
           />
           <MetricCard
             label="Highest Temperature Animal"
             value={hottestAnimal ? hottestAnimal.animal.name : "No data"}
             sublabel={hottestAnimal ? formatTemperature(hottestAnimal.temperature) : "Add temperature readings"}
             tone={hottestAnimal && hottestAnimal.temperature >= 40 ? "red" : "amber"}
+            cardClass={hottestAnimal && hottestAnimal.temperature >= 40 ? "card-rose" : "card-amber"}
           />
-          <MetricCard label="Animals Above Fever Threshold" value={feverAnimals.length} sublabel="Threshold >= 39.8°C" tone="red" />
-          <MetricCard label="Abnormal Activity Count" value={abnormalActivityCount} sublabel="Low/reduced movement" tone={abnormalActivityCount ? "amber" : "green"} />
+          <MetricCard label="Animals Above Fever Threshold" value={feverAnimals.length} sublabel="Threshold >= 39.8°C" tone="red" cardClass="card-rose" />
+          <MetricCard label="Abnormal Activity Count" value={abnormalActivityCount} sublabel="Low/reduced movement" tone={abnormalActivityCount ? "amber" : "green"} cardClass={abnormalActivityCount ? "card-amber" : "card-emerald"} />
         </div>
       </SectionCard>
 
@@ -1025,7 +1096,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
         </div>
 
         {herdTab === "add" ? (
-            <SectionCard title="Register New Animal">
+            <SectionCard title={animalDraft._id ? "Edit Animal Details" : "Register New Animal"}>
               {!isAdmin ? (
                 <div className="hint-box">Only administrators can register new animals. Read-only access for your account.</div>
               ) : null}
@@ -1039,11 +1110,18 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                 <select className="fs" value={animalDraft.type} onChange={(event) => setAnimalDraft((current) => ({ ...current, type: event.target.value }))}>
                   {[
                     "Cattle",
+                    "Cow",
+                    "Bull",
+                    "Buffalo",
                     "Goat",
-                    "Horse",
-                    "Pig",
                     "Sheep",
+                    "Pig",
+                    "Horse",
                     "Poultry",
+                    "Rabbit",
+                    "Donkey",
+                    "Yak",
+                    "Camel",
                   ].map((option) => <option key={option}>{option}</option>)}
                 </select>
               </label>
@@ -1131,9 +1209,35 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                   </div>
                 </div>
               </div>
-              <button className="btn btn-primary" type="submit" disabled={!isAdmin}>
-                <Plus size={14} /> Register Animal
-              </button>
+              <div style={{ display: 'flex', gap: 8, marginTop: 15 }}>
+                <button className="btn btn-primary" type="submit" disabled={!isAdmin}>
+                  <Plus size={14} /> {animalDraft._id ? "Update Animal" : "Register Animal"}
+                </button>
+                {animalDraft._id && (
+                  <button className="btn btn-outline" type="button" onClick={() => {
+                    setAnimalDraft({
+                      name: "",
+                      type: "Cattle",
+                      breed: "",
+                      gender: "Female",
+                      dob: "",
+                      weight: "",
+                      pen: "",
+                      tag: "",
+                      status: "Healthy",
+                      temperature: "",
+                      activityLevel: "Normal",
+                      feedIntake: "Normal",
+                      imageUrl: "",
+                      lastChecked: "",
+                    });
+                    clearAnimalPhoto();
+                    setHerdTab("list");
+                  }}>
+                    Cancel
+                  </button>
+                )}
+              </div>
             </form>
           </SectionCard>
         ) : (
@@ -1247,15 +1351,42 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                       return (
                     <tr key={animal._id}>
                       <td>
-                        <div className="animal-cell">
-                          <AnimalAvatar animal={animal} />
-                          <span style={{ fontWeight: 600 }}>{animal.name}</span>
-                        </div>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(String(animal._id))}
+                          onChange={(e) => {
+                            const next = new Set(selectedIds);
+                            if (e.target.checked) next.add(String(animal._id));
+                            else next.delete(String(animal._id));
+                            setSelectedIds(next);
+                          }}
+                        />
+                      </td>
+                      <td>
+                        <AnimalAvatar animal={animal} />
+                      </td>
+                      <td>
+                        <span style={{ fontWeight: 600 }}>{animal.name}</span>
                       </td>
                       <td>{getAnimalSpecies(animal)} / {animal.breed || "—"}</td>
-                      <td>{animal.gender || "—"}</td>
-                      <td>{animal.dob || "—"}</td>
+                      <td>{getAnimalAge(animal)}</td>
                       <td>{animal.weight ?? "—"} kg</td>
+                      <td><StatusTag value={animal.status || "Healthy"} /></td>
+                      <td>{animal.lastMilk || "—"}</td>
+                      <td>
+                        {(() => {
+                          const lf = animal.lastFed || animal.last_fed || animal.lastFeed;
+                          if (!lf) return "—";
+                          const days = daysSince(lf);
+                          return days === 0 ? "Today" : days === 1 ? "Yesterday" : `${days} days ago`;
+                        })()}
+                      </td>
+                      <td>
+                        {(() => {
+                          const next = vaccinations.find(v => String(v.animalId) === String(animal._id) && v.dueDate);
+                          return next ? `${next.vaccineType || next.vaccine}` : "—";
+                        })()}
+                      </td>
                       <td><span className={`temp-chip temp-${getTemperatureState(parseTemperature(animal))}`}>{formatTemperature(parseTemperature(animal))}</span></td>
                       <td>
                         <div className="risk-stack">
@@ -1267,13 +1398,25 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                       </td>
                       <td>{animal.pen || "—"}</td>
                       <td><code className="inline-code">{animal.tag || "—"}</code></td>
-                      <td><StatusTag value={animal.status || "Healthy"} /></td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button className="btn btn-outline btn-sm" style={{ padding: '2px 6px', fontSize: '11px' }} type="button" onClick={() => {
+                            setAnimalDraft({
+                              ...animal,
+                              type: getAnimalSpecies(animal),
+                              weight: animal.weight ?? "",
+                              temperature: animal.temperature ?? "",
+                            });
+                            setHerdTab("add");
+                          }}>Edit</button>
+                        </div>
+                      </td>
                     </tr>
                       );
                     })()
                   )) : (
                     <tr>
-                      <td colSpan="10">
+                      <td colSpan="15">
                         <div className="empty-state">No animals match your search.</div>
                       </td>
                     </tr>
@@ -2062,10 +2205,10 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
       <div className="space-y-4">
         <SectionCard title="Doctor dashboard" action={<span className="tag tag-blue">Floating module</span>}>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-            <MetricCard label="Pending Consultations" value="5" sublabel="Awaiting review" tone="red" />
-            <MetricCard label="Today's Appointments" value="8" sublabel="Scheduled today" tone="blue" />
-            <MetricCard label="Total Patients" value="120" sublabel="Assigned to doctor" tone="green" />
-            <MetricCard label="Average Rating" value="4.8⭐" sublabel="Latest feedback" tone="amber" />
+            <MetricCard label="Pending Consultations" value="5" sublabel="Awaiting review" tone="red" cardClass="card-rose" />
+            <MetricCard label="Today's Appointments" value="8" sublabel="Scheduled today" tone="blue" cardClass="card-blue" />
+            <MetricCard label="Total Patients" value="120" sublabel="Assigned to doctor" tone="green" cardClass="card-emerald" />
+            <MetricCard label="Average Rating" value="4.8⭐" sublabel="Latest feedback" tone="amber" cardClass="card-amber" />
           </div>
         </SectionCard>
 
@@ -2282,7 +2425,21 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
         </header>
 
         <div className="content-area">
-          {loading ? <div className="loading">Loading farm data...</div> : renderSection()}
+          {loading ? (
+            <div className="loading">Loading farm data...</div>
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.22, ease: "easeInOut" }}
+              >
+                {renderSection()}
+              </motion.div>
+            </AnimatePresence>
+          )}
         </div>
       </section>
     </main>

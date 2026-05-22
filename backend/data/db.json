@@ -240,14 +240,6 @@
       "farmerId": "praj"
     },
     {
-      "name": "Doctor UI",
-      "email": "doctor_ui@example.com",
-      "password": "$2a$10$McIp3T5aMqSPybvuvQDNqejzqeyGdiSFBJ10TbkWKor9XMVfLzrue",
-      "role": "Doctor",
-      "_id": "mpf9zzo2-b6yzu998",
-      "farmerId": "doctor-ui"
-    },
-    {
       "name": "Doctor Final",
       "email": "doctor_ui_final@example.com",
       "password": "$2a$10$b0R/S/YUf1fqcFF9lho.Tui19UOPczzJfRUbYYZd1hhXHrCxaG9qK",
@@ -411,6 +403,78 @@
       "password": "$2a$10$oZB4nZdVsLoOGEiqoajyBeecvhuikN4M0X1t6mUNb/8vvwUiKkXFC",
       "role": "Staff",
       "_id": "mph82ix2-rs3euwbi"
+    },
+    {
+      "name": "prajwal",
+      "farmerId": "998",
+      "password": "$2a$10$KwQAlvAY4M/zVta0SHY.T.r38OnjIKvEO8A755X/vqJkRpoIjLZR2",
+      "role": "Farmer",
+      "email": "",
+      "_id": "mphdi3kd-ey2s2e9p"
+    },
+    {
+      "name": "Test Farmer",
+      "farmerId": "farmer-1779482892360",
+      "password": "$2a$10$RNr3hLkgHomoE2LgnzurveS6kxu5xzFVqPcEiFETT/7AeI7s4LEbu",
+      "role": "Farmer",
+      "email": "",
+      "_id": "mphe63d4-umb60yxz"
+    },
+    {
+      "name": "Test Farmer",
+      "farmerId": "farmer-1779482921579",
+      "password": "$2a$10$IhY47pGOTbvRtXZlSXAfYuHsfJYzMzLvGDws2XxGCNjHs/BuAK2pa",
+      "role": "Farmer",
+      "email": "",
+      "_id": "mphe6pwr-g03kcdui"
+    },
+    {
+      "name": "Test Farmer",
+      "farmerId": "farmer-1779482944392",
+      "password": "$2a$10$TYb96k6u77DpZBqPYwdrEe2EpD7oqL4/gN.CD8eaait9g.mmSRgZW",
+      "role": "Farmer",
+      "email": "",
+      "_id": "mphe77ih-c4dpnurm"
+    },
+    {
+      "name": "Test Farmer",
+      "farmerId": "farmer-1779483210628",
+      "password": "$2a$10$I6n8OGzIfdiVYz5DL6xLXuPmVxF9KNhE9qqKd89SRPL4hdDyxEGcS",
+      "role": "Farmer",
+      "email": "",
+      "_id": "mphecwxu-vtwb5gfd"
+    },
+    {
+      "name": "Auto Admin",
+      "farmerId": "testuser-1779483912383",
+      "password": "$2a$10$fCZ1/aTG.YDsaYbjfT6aou3qefp44NPaNIMu81QcKVEUY9urr3lbq",
+      "role": "Farmer",
+      "email": "",
+      "_id": "mpheryg6-sp6auc25"
+    },
+    {
+      "name": "Test Farmer",
+      "farmerId": "farmer-1779483924939",
+      "password": "$2a$10$HyClPY4T1391TNd87CSNGuUiOpphB1J7.jvcUM1n24/HICNM5pimC",
+      "role": "Farmer",
+      "email": "",
+      "_id": "mphes83v-qb6g64oc"
+    },
+    {
+      "name": "praj",
+      "farmerId": "123",
+      "password": "$2a$10$Xxj8IXAJUZHf12oTMTLRpu6.6qAT0CSk/dT9jPVE2fgjfleKrOGt2",
+      "role": "Farmer",
+      "email": "",
+      "_id": "mpheuw1j-svvfndt7"
+    },
+    {
+      "name": "Aesthetic Farmer",
+      "farmerId": "farmer-1779485585273",
+      "password": "$2a$10$xifFzNb6Bx0ptla34T8IiebsUUZdkvJ0yBucfzUSMcHqJxViiCfYC",
+      "role": "Farmer",
+      "email": "",
+      "_id": "mphfrt9a-6330ff50"
     }
   ],
   "animals": [
@@ -478,6 +542,130 @@
       "type": "Cow",
       "_id": "mpf81q88-v4r4iwun",
       "createdAt": "2026-05-21T08:21:18.728Z"
+    },
+    {
+      "name": "Bessie Test",
+      "type": "Cattle",
+      "breed": "Holstein",
+      "gender": "Female",
+      "dob": "2020-01-01",
+      "weight": 500,
+      "pen": "Pen A",
+      "tag": "C-999",
+      "status": "Healthy",
+      "temperature": 38.5,
+      "activityLevel": "Normal",
+      "feedIntake": "Normal",
+      "_id": "mphe77ir-h4o1byre",
+      "createdAt": "2026-05-22T20:49:04.467Z"
+    },
+    {
+      "name": "Bessie Test",
+      "type": "Cattle",
+      "breed": "Holstein",
+      "gender": "Female",
+      "dob": "2020-01-01",
+      "weight": 500,
+      "pen": "Pen A",
+      "tag": "C-999",
+      "status": "Healthy",
+      "temperature": 38.5,
+      "activityLevel": "Normal",
+      "feedIntake": "Normal",
+      "_id": "mphecwy1-7gt92f8m",
+      "createdAt": "2026-05-22T20:53:30.697Z"
+    },
+    {
+      "name": "Bessie Test",
+      "type": "Cattle",
+      "breed": "Holstein",
+      "gender": "Female",
+      "dob": "2020-01-01",
+      "weight": 500,
+      "pen": "Pen A",
+      "tag": "C-999",
+      "status": "Healthy",
+      "temperature": 38.5,
+      "activityLevel": "Normal",
+      "feedIntake": "Normal",
+      "_id": "mphes843-dl9le5mj",
+      "createdAt": "2026-05-22T21:05:25.011Z"
+    },
+    {
+      "name": "chinnu",
+      "type": "Cattle",
+      "breed": "jersey",
+      "gender": "Female",
+      "dob": "2006-07-03",
+      "weight": 85,
+      "pen": "chitradurga",
+      "tag": "t-98",
+      "status": "Quarantine",
+      "temperature": 45.7,
+      "activityLevel": "Low",
+      "feedIntake": "Low",
+      "imageUrl": "/uploads/mphezgt1-343v4dm7-1779484262894.jpg",
+      "lastChecked": "2026-05-05T02:40",
+      "species": "Cattle",
+      "_id": "mphezgt1-343v4dm7",
+      "createdAt": "2026-05-22T21:11:02.869Z",
+      "photoUrl": "/uploads/mphezgt1-343v4dm7-1779484262894.jpg",
+      "updatedAt": "2026-05-22T21:11:02.898Z"
+    },
+    {
+      "name": "Bubbles the Buffalo",
+      "type": "Buffalo",
+      "breed": "Murrah",
+      "gender": "Male",
+      "dob": "2022-05-10",
+      "weight": 650,
+      "pen": "Pen B",
+      "tag": "BUF-001",
+      "status": "Healthy",
+      "temperature": 38.2,
+      "activityLevel": "Normal",
+      "feedIntake": "Normal",
+      "_id": "mphfrtbe-z31960lc",
+      "createdAt": "2026-05-22T21:33:05.450Z"
+    },
+    {
+      "name": "TestGoat-1779485814357",
+      "type": "Goat",
+      "breed": "Jamunapari",
+      "gender": "Female",
+      "weight": 45,
+      "pen": "Pen G",
+      "tag": "GT-4357",
+      "status": "Healthy",
+      "temperature": 38.9,
+      "_id": "mphfwpy5-llhjte9o",
+      "createdAt": "2026-05-22T21:36:54.365Z"
+    },
+    {
+      "name": "TestSheep-1779485814368",
+      "type": "Sheep",
+      "breed": "Merino",
+      "gender": "Male",
+      "weight": 60,
+      "pen": "Pen S",
+      "tag": "SH-4368",
+      "status": "Healthy",
+      "temperature": 39.1,
+      "_id": "mphfwpyc-61n3e51x",
+      "createdAt": "2026-05-22T21:36:54.372Z"
+    },
+    {
+      "name": "TestCamel-1779485814375",
+      "type": "Camel",
+      "breed": "Dromedary",
+      "gender": "Male",
+      "weight": 500,
+      "pen": "Pen C",
+      "tag": "CM-4375",
+      "status": "Healthy",
+      "temperature": 37.5,
+      "_id": "mphfwpyk-ybqvs5e4",
+      "createdAt": "2026-05-22T21:36:54.380Z"
     }
   ],
   "feeders": [],

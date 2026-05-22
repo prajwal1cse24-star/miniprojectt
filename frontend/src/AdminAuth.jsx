@@ -18,7 +18,11 @@ const AdminAuth = ({ onAuthSuccess }) => {
     setMessage('');
     try {
       const endpoint = '/api/auth/admin/login';
-      const body = { name: form.name.trim(), password: form.password };
+      const body = {
+        name: form.name.trim(),
+        farmerId: form.name.trim().toLowerCase(),
+        password: form.password,
+      };
 
       const res = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
@@ -41,6 +45,13 @@ const AdminAuth = ({ onAuthSuccess }) => {
 
   return (
     <main className='auth-page'>
+      <div className="floating-water-container">
+        <div className="water-drop water-drop-1"></div>
+        <div className="water-drop water-drop-2"></div>
+        <div className="water-drop water-drop-3"></div>
+        <img src="/media/floating_cow_water.png" alt="Floating Water Cow" className="floating-water-img" />
+      </div>
+
       <section className='auth-card'>
         <div className='login-header'>
           <div className='login-icon'>ADM</div>

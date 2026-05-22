@@ -86,6 +86,13 @@ const AuthView = ({ onAuthSuccess }) => {
 
   return (
     <main className='auth-page'>
+      <div className="floating-water-container">
+        <div className="water-drop water-drop-1"></div>
+        <div className="water-drop water-drop-2"></div>
+        <div className="water-drop water-drop-3"></div>
+        <img src="/media/floating_cow_water.png" alt="Floating Water Cow" className="floating-water-img" />
+      </div>
+
       <section className='auth-hero'>
         <p className='eyebrow'>FarmTrack Pro</p>
         <h1>Sign in to FarmTrack Pro</h1>
