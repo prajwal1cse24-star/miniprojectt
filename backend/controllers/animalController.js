@@ -24,3 +24,13 @@ export const updateAnimalPhoto = async (req, res) => {
 
   return res.json({ success: true, photoUrl, animal: updated });
 };
+
+export const updateAnimal = async (req, res) => {
+  const updated = await storeUpdateAnimalById(req.params.animalId, req.body);
+
+  if (!updated) {
+    return res.status(404).json({ message: "Animal not found" });
+  }
+
+  return res.json(updated);
+};

@@ -5,6 +5,7 @@ export default defineConfig({
   root: "frontend",
   plugins: [react()],
   server: {
+    host: "localhost",
     proxy: {
       "/api": "http://localhost:5000",
       "/uploads": "http://localhost:5000",

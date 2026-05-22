@@ -1,0 +1,17 @@
+/* Theme override file: change these variables to switch the app color theme */
+:root {
+  --ft-primary: #0b84ff; /* primary actions, header */
+  --ft-accent: #06b6d4;  /* accent / secondary buttons */
+  --ft-bg: #f8fafc;      /* page background (light) */
+  --ft-text: #0f172a;    /* main text color */
+  --ft-success: #16a34a; /* success */
+  --ft-danger: #ef4444;  /* errors */
+}
+
+/* Small helper classes that use theme variables. Use these in markup
+   if you want to rely on central theme colors without editing many files. */
+.ft-header { background-color: var(--ft-primary); color: #fff }
+.ft-btn-primary { background-color: var(--ft-primary); color: #fff }
+.ft-btn-accent { background-color: var(--ft-accent); color: #fff }
+
+/* Example: change these values to quickly swap color scheme */

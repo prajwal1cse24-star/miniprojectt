@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import { ensureUserFarmerIds } from "./data/store.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import animalRoutes from "./routes/animalRoutes.js";
@@ -13,8 +14,13 @@ import healthRoutes from "./routes/healthRoutes.js";
 import staffRoutes from "./routes/staffRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import alertRoutes from "./routes/alertRoutes.js";
+import consultationRoutes from "./routes/consultationRoutes.js";
 
 dotenv.config();
+
+ensureUserFarmerIds().catch((error) => {
+  console.error("Unable to normalize farmer IDs:", error?.message || error);
+});
 
 // connect to MongoDB when MONGO_URI is provided
 import connectDB from "./config/db.js";
@@ -74,6 +80,9 @@ app.use("/api/health", healthRoutes);
 app.use("/api/staff", staffRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/alerts", alertRoutes);
+app.use("/api/consultations", consultationRoutes);
+import userRoutes from "./routes/userRoutes.js";
+app.use("/api/users", userRoutes);
 
 // Serve frontend build when present
 const __filename = fileURLToPath(import.meta.url);
@@ -100,7 +109,7 @@ const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 5000;
 const MAX_PORT_RETRIES = 5;
 
 function startServer(port, attemptsLeft) {
-  const server = app.listen(port, () => console.log(`Server running on port ${port}`));
+  const server = app.listen(port, '127.0.0.1', () => console.log(`Server running on http://127.0.0.1:${port}`));
 
   server.on('error', (err) => {
     if (err && err.code === 'EADDRINUSE') {

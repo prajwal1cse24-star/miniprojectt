@@ -71,8 +71,6 @@ const pageTitles = {
   overview: "Home Dashboard",
   livestock: "Livestock Inventory",
   health: "Health & Medical",
-  vaccination: "Vaccination Tracking",
-  feeding: "Feeder Management",
   reports: "Reports & Analytics",
   staff: "Staff Management",
   notifications: "Notifications",
@@ -158,6 +156,8 @@ function App() {
     return saved ? JSON.parse(saved) : false;
   });
   const isAuthenticated = Boolean(token);
+  const currentRole = String(currentUser?.role || "").toLowerCase();
+  const isDoctor = currentRole === "doctor";
 
   // Apply dark mode to document
   useEffect(() => {
@@ -626,14 +626,14 @@ function App() {
     ]
   );
 
-  const handleAuthSuccess = useCallback(async (token, user) => {
+  const handleAuthSuccess = useCallback(async (token, user, redirectPath) => {
     setToken(token);
     setCurrentUser(user);
     localStorage.setItem("authToken", token);
     localStorage.setItem("authUser", JSON.stringify(user || null));
     await loadData();
     showNotification(`Welcome ${user?.name || user?.email || "back"}.`, "success");
-    navigate("/", { replace: true });
+    navigate(redirectPath || "/", { replace: true });
   }, [loadData, navigate]);
 
   // App routes: login and protected dashboard
@@ -642,6 +642,7 @@ function App() {
       <NotificationToaster />
       <Routes>
         <Route path="/login" element={!isAuthenticated ? <AuthView onAuthSuccess={handleAuthSuccess} /> : <Navigate to="/" replace />} />
+        <Route path="/admin-login" element={<Navigate to="/login" replace />} />
         <Route
           path="/"
           element={

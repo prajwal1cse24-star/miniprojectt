@@ -4,6 +4,7 @@ import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createAnimal, getAnimals, updateAnimalPhoto } from "../controllers/animalController.js";
+import { authMiddleware, adminOnly } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -36,8 +37,17 @@ const upload = multer({
 	},
 });
 
-router.post("/", createAnimal);
-router.post("/:animalId/photo", upload.single("image"), updateAnimalPhoto);
+router.post("/", authMiddleware, adminOnly, createAnimal);
+router.post("/:animalId/photo", authMiddleware, adminOnly, upload.single("image"), updateAnimalPhoto);
 router.get("/", getAnimals);
+// PATCH /:animalId - update animal fields (admin only)
+router.patch("/:animalId", authMiddleware, adminOnly, async (req, res) => {
+	try {
+		const { updateAnimal } = await import("../controllers/animalController.js");
+		return updateAnimal(req, res);
+	} catch (err) {
+		return res.status(500).json({ message: err.message });
+	}
+});
 
 export default router;

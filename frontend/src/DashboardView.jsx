@@ -1,42 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import * as XLSX from "xlsx";
-import {
-  Activity,
-  AlertTriangle,
-  BarChart3,
-  Bell,
-  CheckCircle,
-  ChevronRight,
-  CircleAlert,
-  Clock3,
-  FileText,
-  Heart,
-  LayoutDashboard,
-  LogOut,
-  MapPin,
-  Moon,
-  Plus,
-  RefreshCcw,
-  Search,
-  Settings,
-  Sun,
-  Syringe,
-  Thermometer,
-  Trash2,
-  Users,
-  Zap,
-} from "lucide-react";
+import * as Icons from "lucide-react";
+import { showNotification } from "./notifications";
 
-const navItems = [
-  { id: "overview", label: "Dashboard", icon: LayoutDashboard },
-  { id: "livestock", label: "Herd Management", icon: Activity },
-  { id: "health", label: "Health & Vet", icon: Heart },
-  { id: "feeding", label: "Feed Manager", icon: Zap },
-  { id: "reports", label: "Reports", icon: FileText },
-  { id: "staff", label: "User Management", icon: Users },
-  { id: "settings", label: "Settings", icon: Settings },
-];
+const { Activity, AlertTriangle, CircleAlert, Users, Settings, Bell, FileText, Archive, Edit2, Trash2, Heart, Coffee, BarChart2, UserPlus, LogOut, Search, RefreshCcw, Sun, Moon, CheckCircle, Syringe, Plus, Thermometer, Zap } = Icons;
 
 const pageTitles = {
   overview: "Dashboard",
@@ -44,6 +11,7 @@ const pageTitles = {
   health: "Health & Vet",
   feeding: "Feed Manager",
   reports: "Reports",
+  doctor: "Doctor Dashboard",
   staff: "User Management",
   settings: "Settings",
 };
@@ -58,7 +26,6 @@ const requestJson = async (path, options = {}) => {
     ...(localStorage.getItem("authToken") ? { Authorization: `Bearer ${localStorage.getItem("authToken")}` } : {}),
     ...(options.headers || {}),
   };
-
   const response = await fetch(`${API_BASE}/api${path}`, { ...options, headers });
   const data = await response.json().catch(() => ({}));
 
@@ -69,13 +36,6 @@ const requestJson = async (path, options = {}) => {
   return data;
 };
 
-const downloadCSV = (filename, rows) => {
-  const csv = rows.map((row) => row.map((cell) => JSON.stringify(cell ?? "")).join(",")).join("\n");
-  const link = document.createElement("a");
-  link.href = `data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;
-  link.download = filename;
-  link.click();
-};
 
 const toneForStatus = (status) => {
   const normalized = String(status || "").toLowerCase();
@@ -179,26 +139,26 @@ const getDiseaseRiskDetails = (animal) => {
   const activity = String(animal?.activityLevel || "").toLowerCase();
   const feedIntake = String(animal?.feedIntake || "").toLowerCase();
   const status = String(animal?.status || "").toLowerCase();
-  let cause = "No strong warning signs detected";
+  let cause = "Physiological parameters are within expected limits";
 
   if (temperature != null) {
     if (temperature >= 40) {
-      reasons.push(`High fever (${temperature.toFixed(1)}°C)`);
+      reasons.push(`Pyrexia / high fever (${temperature.toFixed(1)}°C)`);
     } else if (temperature >= 39.3) {
-      reasons.push(`Elevated temperature (${temperature.toFixed(1)}°C)`);
+      reasons.push(`Elevated rectal temperature (${temperature.toFixed(1)}°C)`);
     }
   }
 
   if (["low", "very low", "none", "reduced"].includes(activity)) {
-    reasons.push("Low activity");
+    reasons.push("Reduced activity / lethargy");
   }
 
   if (["low", "reduced", "poor"].includes(feedIntake)) {
-    reasons.push("Reduced feed intake");
+    reasons.push("Reduced feed intake / anorexia");
   }
 
   if (["sick", "quarantine"].includes(status)) {
-    reasons.push(`Status marked ${animal?.status || "high risk"}`);
+    reasons.push(`Clinical status flagged as ${animal?.status || "high risk"}`);
   }
 
   const hasFever = temperature != null && temperature >= 39.3;
@@ -206,21 +166,41 @@ const getDiseaseRiskDetails = (animal) => {
   const hasFeedIssue = ["low", "reduced", "poor"].includes(feedIntake);
 
   if (hasFever && hasActivityIssue) {
-    cause = "Possible infection or fever-related illness";
+    cause = "Clinical pattern is compatible with an acute febrile illness, often seen with infectious or inflammatory disease processes";
   } else if (hasFever && hasFeedIssue) {
-    cause = "Possible fever with appetite loss";
+    cause = "Pyrexia with anorexia suggests a systemic inflammatory or infectious condition";
   } else if (status === "sick" || status === "quarantine") {
-    cause = `Animal status is marked ${animal?.status || "high risk"}`;
+    cause = `The record is clinically flagged as ${animal?.status || "high risk"}, indicating close veterinary observation is warranted`;
   } else if (reasons.length) {
-    cause = "Needs closer health monitoring";
+    cause = "Mild abnormal signs are present and warrant closer monitoring";
   }
 
   if (!reasons.length) {
-    reasons.push("No strong warning signs detected");
-    cause = "Everything is good";
+    reasons.push("Rectal temperature, activity, and feed intake remain within expected limits");
   }
 
   return { reasons, cause };
+};
+
+const getJudgeNote = (riskLabel, riskDetails) => {
+  if (riskLabel === "Normal") {
+    return "Stable vitals";
+  }
+
+  const firstReason = (riskDetails?.reasons || []).find(Boolean);
+  if (!firstReason) {
+    return "Needs vet review";
+  }
+
+  return firstReason;
+};
+
+const getNextVaccine = (animal, vaccinations = []) => {
+  const list = (vaccinations || []).filter((v) => String(v.animalId) === String(animal._id) || String(v.animal?._id) === String(animal._id));
+  if (!list.length) return null;
+  // find next due date
+  const future = list.filter((v) => v.dueDate).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+  return future[0] || list[0];
 };
 
 const formatTemperature = (temperature) => {
@@ -228,6 +208,78 @@ const formatTemperature = (temperature) => {
     return "No data";
   }
   return `${temperature.toFixed(1)}°C`;
+};
+
+const timeUntil = (iso) => {
+  if (!iso) return "No date";
+  try {
+    const then = new Date(iso);
+    const now = new Date();
+    const diff = then - now;
+    const abs = Math.abs(diff);
+    const mins = Math.floor(abs / (1000 * 60));
+    if (diff > 0) {
+      if (mins < 60) return `in ${mins}m`;
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return `in ${hrs}h`;
+      const days = Math.floor(hrs / 24);
+      return `in ${days}d`;
+    }
+    // past
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+  } catch (e) {
+    return "Invalid date";
+  }
+};
+
+const daysSince = (iso) => {
+  if (!iso) return Infinity;
+  try {
+    const then = new Date(iso);
+    const now = new Date();
+    return Math.floor((now - then) / (1000 * 60 * 60 * 24));
+  } catch (e) {
+    return Infinity;
+  }
+};
+
+const feedLevelNumeric = (animal) => {
+  if (!animal) return null;
+  if (animal.feedLevel != null) return Number(animal.feedLevel);
+  if (animal.feedLevelPercent != null) return Number(animal.feedLevelPercent);
+  const fi = String(animal.feedIntake || "").toLowerCase();
+  const map = { none: 0, "very low": 5, low: 20, reduced: 40, normal: 70, good: 85, high: 95 };
+  if (map[fi] != null) return map[fi];
+  return null;
+};
+
+const isFeedAlert = (animal) => {
+  // alert if feed intake string indicates low or lastFed older than 1 day
+  const fi = String(animal.feedIntake || "").toLowerCase();
+  if (["none", "very low", "low", "reduced"].includes(fi)) return true;
+  // lastFed may be timestamp or ISO
+  const lastFed = animal.lastFed || animal.last_fed || animal.lastFeed;
+  const days = daysSince(lastFed);
+  if (days === Infinity) return false;
+  return days >= 1; // alert if not fed in 24+ hours
+};
+
+const Sparkline = ({ values = [], width = 80, height = 28, stroke = '#ef4444' }) => {
+  if (!values.length) return <svg width={width} height={height}><text x="6" y="16" style={{fontSize:10,color:'#444'}}>no data</text></svg>;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const step = width / Math.max(1, values.length - 1);
+  const points = values.map((v, i) => `${i * step},${height - ((v - min) / range) * height}`).join(' ');
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
+      <polyline fill="none" stroke={stroke} strokeWidth="2" points={points} />
+    </svg>
+  );
 };
 
 const AnimalAvatar = ({ animal }) => {
@@ -280,6 +332,31 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
     setSearchTerm,
   } = app;
 
+  const [usersList, setUsersList] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [groupByBreed, setGroupByBreed] = useState(false);
+
+  const loadUsers = async () => {
+    if (!isAdmin) return;
+    setLoadingUsers(true);
+    try {
+      const data = await requestJson('/users');
+      setUsersList(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setFlash('Unable to load users: ' + err.message);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'staff') loadUsers();
+  }, [activeTab]);
+
+  const isAdmin = String(currentUser?.role || "").toLowerCase() === "admin";
+
   const [flash, setFlash] = useState("");
   const [herdTab, setHerdTab] = useState("list");
   const [healthTab, setHealthTab] = useState("vacc");
@@ -289,10 +366,14 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
     const query = String(searchTerm || "").trim().toLowerCase();
 
     if (!query) {
-      return animals;
+      const list = [...animals];
+      if (groupByBreed) {
+        list.sort((x, y) => String(x.breed || '').localeCompare(String(y.breed || '')));
+      }
+      return list;
     }
 
-    return animals.filter((animal) => {
+    const filtered = animals.filter((animal) => {
       const haystack = [
         animal.name,
         animal.type,
@@ -309,7 +390,28 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
 
       return haystack.includes(query);
     });
-  }, [animals, searchTerm]);
+
+    if (groupByBreed) {
+      filtered.sort((x, y) => String(x.breed || '').localeCompare(String(y.breed || '')));
+    }
+
+    return filtered;
+  }, [animals, searchTerm, groupByBreed]);
+
+  // show toast notifications for feed alerts (once per animal per session)
+  const seenFeedAlerts = useRef(new Set());
+  useEffect(() => {
+    if (!animals || !animals.length) return;
+    const alerts = animals.filter(isFeedAlert);
+    alerts.forEach((a) => {
+      const key = a._id || a.tag || a.name;
+      if (seenFeedAlerts.current.has(key)) return;
+      seenFeedAlerts.current.add(key);
+      const reason = String(a.feedIntake || '').toLowerCase();
+      const message = reason ? `${a.name || a.tag || 'Animal'}: ${reason}` : `${a.name || a.tag || 'Animal'} has low feed intake or hasn't been fed recently`;
+      showNotification(message, 'warning');
+    });
+  }, [animals]);
 
   const [animalDraft, setAnimalDraft] = useState({
     name: "",
@@ -361,10 +463,17 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
     quantity: "",
   });
 
+  // Doctor appointments (consultations)
+  const [appointments, setAppointments] = useState([]);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
+  const [appointmentDraft, setAppointmentDraft] = useState({ animalId: "", appointment_date: "", symptoms: "" });
+  const [diagnosisDrafts, setDiagnosisDrafts] = useState({});
+  const [processingDiagnosis, setProcessingDiagnosis] = useState({});
+
   const [staffDraft, setStaffDraft] = useState({
     name: "",
+    farmerId: "",
     role: "Staff",
-    email: "",
     phone: "",
     status: "Active",
     joined: today(),
@@ -462,16 +571,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
     return payload;
   };
 
-  const exportWorkbook = (fileName, sheets) => {
-    const workbook = XLSX.utils.book_new();
-
-    sheets.forEach(({ name, headers, rows }) => {
-      const sheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-      XLSX.utils.book_append_sheet(workbook, sheet, name);
-    });
-
-    XLSX.writeFile(workbook, `${fileName}-${Date.now()}.xlsx`);
-  };
+  // CSV/Excel export removed per user request — reports will show graphs/alerts only.
 
   const submitAnimal = async (event) => {
     event.preventDefault();
@@ -599,25 +699,70 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
     }
   };
 
+  const loadAppointments = async () => {
+    setLoadingAppointments(true);
+    try {
+      const data = await requestJson('/consultations');
+      const list = Array.isArray(data) ? data : Array.isArray(data?.value) ? data.value : [];
+      setAppointments(list);
+    } catch (err) {
+      setFlash('Skipping appointments fetch: ' + err.message);
+    } finally {
+      setLoadingAppointments(false);
+    }
+  };
+
+  useEffect(() => {
+    // load appointments when component mounts
+    loadAppointments();
+  }, []);
+
+  const submitAppointment = async (e) => {
+    e.preventDefault();
+    if (!appointmentDraft.animalId || !appointmentDraft.appointment_date) {
+      setFlash('Animal and appointment date/time are required');
+      return;
+    }
+
+    try {
+      await requestJson('/consultations', { method: 'POST', body: JSON.stringify({
+        animalId: appointmentDraft.animalId,
+        appointment_date: appointmentDraft.appointment_date,
+        symptoms: appointmentDraft.symptoms,
+      }) });
+      setFlash('Appointment requested.');
+      setAppointmentDraft({ animalId: '', appointment_date: '', symptoms: '' });
+      await loadAppointments();
+    } catch (err) {
+      setFlash('Unable to request appointment: ' + err.message);
+    }
+  };
+
   const submitStaff = async (event) => {
     event.preventDefault();
     try {
-      await requestJson("/staff", {
+      await requestJson("/users", {
         method: "POST",
-        body: JSON.stringify(staffDraft),
+        body: JSON.stringify({
+          name: staffDraft.name,
+          farmerId: staffDraft.farmerId,
+          role: staffDraft.role,
+          phone: staffDraft.phone,
+          status: staffDraft.status,
+        }),
       });
       setStaffDraft({
         name: "",
+        farmerId: "",
         role: "Staff",
-        email: "",
         phone: "",
         status: "Active",
         joined: today(),
       });
       setFlash("User saved successfully.");
-      await loadData?.();
+      await loadUsers();
     } catch (error) {
-      setFlash(`Unable to save staff member: ${error.message}`);
+      setFlash(`Unable to save user: ${error.message}`);
     }
   };
 
@@ -647,6 +792,43 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
           <MetricCard label="Animals Above Fever Threshold" value={feverAnimals.length} sublabel="Threshold >= 39.8°C" tone="red" />
           <MetricCard label="Abnormal Activity Count" value={abnormalActivityCount} sublabel="Low/reduced movement" tone={abnormalActivityCount ? "amber" : "green"} />
         </div>
+      </SectionCard>
+
+      <SectionCard title="Doctor Consultations">
+        {(() => {
+          const consultations = [
+            { id: 1, farmer: "Raju Shetty", animal: "Bella", urgency: "Critical", symptom: "Fever, reduced feed intake, and swollen hind leg." },
+            { id: 2, farmer: "Anitha Kumar", animal: "Moti", urgency: "Moderate", symptom: "Cough, mild discharge, and lower milk yield." },
+            { id: 3, farmer: "Naveen Rao", animal: "Daisy", urgency: "Normal", symptom: "Loose stool and dehydration signs." },
+          ];
+
+          const urgencyClass = (value) => {
+            const normalized = String(value || "").toLowerCase();
+            if (normalized === "critical") return "tag tag-red";
+            if (normalized === "moderate") return "tag tag-amber";
+            if (normalized === "normal") return "tag tag-green";
+            return "tag tag-blue";
+          };
+
+          return (
+            <div className="grid gap-3">
+              {consultations.map((c) => (
+                <div key={c.id} className="consult-row">
+                  <div className="consult-main">
+                    <div style={{ fontWeight: 600 }}>{c.farmer} — {c.animal}</div>
+                    <div className="text-sm text-muted">{c.symptom}</div>
+                  </div>
+                  <div className="consult-actions">
+                    <span className={urgencyClass(c.urgency)}>{c.urgency}</span>
+                    {String(currentUser?.role || "").toLowerCase() === 'doctor' || isAdmin ? (
+                      <button className="btn btn-primary" type="button" onClick={() => setActiveTab?.('doctor')}>Open</button>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </SectionCard>
 
       <AnimatePresence>
@@ -698,6 +880,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
             visibleAnimals.slice(0, 5).map((animal) => {
               const riskLabel = getDiseaseRisk(animal);
               const riskDetails = getDiseaseRiskDetails(animal);
+                  const appForAnimal = appointments.find((a) => String(a.animalId) === String(animal._id) && (a.status === 'pending' || !a.status));
 
               return (
                 <div key={animal._id} className="animal-card">
@@ -709,12 +892,15 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                     </div>
                     <div className="row-tags">
                       <span className={`temp-chip temp-${getTemperatureState(parseTemperature(animal))}`}>{formatTemperature(parseTemperature(animal))}</span>
+                      {appForAnimal ? (
+                        <div style={{ marginLeft: 8 }}>
+                          <span className="tag tag-blue">Consult: {timeUntil(appForAnimal.appointment_date || appForAnimal.createdAt)}</span>
+                        </div>
+                      ) : null}
                       <div className="risk-stack">
                         <StatusTag value={riskLabel} />
                         <small className={`risk-note ${riskLabel === "Normal" ? "risk-note-good" : ""}`}>
-                          {riskLabel === "Normal"
-                            ? `${riskDetails.cause} — ${riskDetails.reasons.join(", ")}`
-                            : `Why: ${riskDetails.cause}. Signs: ${riskDetails.reasons.join(", ")}`}
+                          {getJudgeNote(riskLabel, riskDetails)}
                         </small>
                       </div>
                     </div>
@@ -775,7 +961,10 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
         </div>
 
         {herdTab === "add" ? (
-          <SectionCard title="Register New Animal">
+            <SectionCard title="Register New Animal">
+              {!isAdmin ? (
+                <div className="hint-box">Only administrators can register new animals. Read-only access for your account.</div>
+              ) : null}
             <form className="form-grid" onSubmit={submitAnimal}>
               <label className="fg">
                 <span className="fl">Animal Name *</span>
@@ -878,27 +1067,111 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                   </div>
                 </div>
               </div>
-              <button className="btn btn-primary" type="submit">
+              <button className="btn btn-primary" type="submit" disabled={!isAdmin}>
                 <Plus size={14} /> Register Animal
               </button>
             </form>
           </SectionCard>
         ) : (
           <SectionCard title="Animal List">
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
+              <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input type="checkbox" onChange={(e) => {
+                  if (e.target.checked) setSelectedIds(new Set(visibleAnimals.map(a => String(a._id))));
+                  else setSelectedIds(new Set());
+                }} checked={visibleAnimals.length > 0 && selectedIds.size === visibleAnimals.length} />
+                <span>✓ Select All Animals</span>
+              </label>
+              <button className="btn btn-primary" type="button" onClick={async () => {
+                if (!selectedIds.size) { setFlash('No animals selected'); return; }
+                const vaccineType = window.prompt('Vaccine name to apply to selected animals', 'FMD');
+                if (!vaccineType) return;
+                try {
+                  for (const id of Array.from(selectedIds)) {
+                    await requestJson('/vaccinations', { method: 'POST', body: JSON.stringify({ animalId: id, vaccineType, dueDate: new Date().toISOString(), status: 'done', batchNumber: 'FMD-2026-0458' }) });
+                  }
+                  setFlash('Vaccination recorded for selected animals');
+                  await loadData?.();
+                } catch (err) { setFlash('Vaccination failed: ' + err.message); }
+              }}>
+                Vaccinate Selected
+              </button>
+
+              <button className="btn btn-outline" type="button" onClick={async () => {
+                if (!selectedIds.size) { setFlash('No animals selected'); return; }
+                const pasture = window.prompt('Move selected animals to pasture (name)', 'Pasture A');
+                if (!pasture) return;
+                try {
+                  for (const id of Array.from(selectedIds)) {
+                    await requestJson(`/animals/${id}`, { method: 'PATCH', body: JSON.stringify({ pen: pasture }) });
+                  }
+                  setFlash('Selected animals moved to ' + pasture);
+                  await loadData?.();
+                } catch (err) { setFlash('Move failed: ' + err.message); }
+              }}>Move to Pasture</button>
+
+              <button className="btn btn-outline" type="button" onClick={() => {
+                if (!selectedIds.size) { setFlash('No animals selected'); return; }
+                const rows = [["Photo","Name/ID","Breed","Age","Weight","Health","Last Milk","Last Fed","Next Vaccine","Pen","Tag"]];
+                for (const id of Array.from(selectedIds)) {
+                  const a = animalsById.get(String(id));
+                  rows.push([
+                    a?.photoUrl || a?.imageUrl || '',
+                    a?.name || '',
+                    a?.breed || '',
+                    a?.dob ? Math.floor((Date.now() - new Date(a.dob).getTime())/(1000*60*60*24*30)) + ' months' : '',
+                    a?.weight || '',
+                    a?.status || '',
+                    a?.lastMilk || '',
+                    a?.lastFed || '',
+                    (() => { const next = vaccinations.find(v => String(v.animalId) === String(id) && v.dueDate); return next ? `${next.vaccineType || next.vaccine} - ${next.dueDate}` : ''; })(),
+                    a?.pen || '',
+                    a?.tag || ''
+                  ]);
+                }
+              }}> 
+              </button>
+
+              <button className="btn btn-outline" type="button" onClick={() => {
+                if (!selectedIds.size) { setFlash('No animals selected'); return; }
+                const win = window.open('', '_blank');
+                if (!win) { setFlash('Unable to open print window'); return; }
+                win.document.write('<html><head><title>Print Tags</title></head><body>');
+                for (const id of Array.from(selectedIds)) {
+                  const a = animalsById.get(String(id));
+                  win.document.write(`<div style="page-break-inside:avoid;border:1px solid #ccc;padding:8px;margin:8px;display:inline-block;min-width:200px;">`);
+                  win.document.write(`<div><strong>${a?.name || ''}</strong></div>`);
+                  win.document.write(`<div>Tag: ${a?.tag || ''}</div>`);
+                  win.document.write(`<div>Breed: ${a?.breed || ''}</div>`);
+                  win.document.write(`</div>`);
+                }
+                win.document.write('</body></html>');
+                win.document.close();
+                win.focus();
+                win.print();
+              }}>Print Tags</button>
+
+              <button className="btn btn-outline" type="button" onClick={() => setGroupByBreed((g) => !g)}>{groupByBreed ? 'Ungroup' : 'Group by Breed'}</button>
+            </div>
             <div className="table-wrap">
               <table className="tbl">
                 <thead>
                   <tr>
-                    <th>Animal</th>
-                    <th>Species / Breed</th>
-                    <th>Gender</th>
-                    <th>DOB</th>
+                    <th></th>
+                    <th>Photo</th>
+                    <th>Name/ID</th>
+                    <th>Breed</th>
+                    <th>Age</th>
                     <th>Weight</th>
+                    <th>Health</th>
+                    <th>Last Milk</th>
+                    <th>Last Fed</th>
+                    <th>Next Vaccine</th>
                     <th>Temperature</th>
                     <th>Disease Risk</th>
                     <th>Pen</th>
                     <th>Tag</th>
-                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -924,9 +1197,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                         <div className="risk-stack">
                           <StatusTag value={riskLabel} />
                           <small className={`risk-note ${riskLabel === "Normal" ? "risk-note-good" : ""}`}>
-                            {riskLabel === "Normal"
-                              ? `${riskDetails.cause} — ${riskDetails.reasons.join(", ")}`
-                              : `Why: ${riskDetails.cause}. Signs: ${riskDetails.reasons.join(", ")}`}
+                            {getJudgeNote(riskLabel, riskDetails)}
                           </small>
                         </div>
                       </td>
@@ -969,9 +1240,49 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
           ))}
         </div>
 
+        <SectionCard title="Doctor Consultations">
+          {(() => {
+            const consultations = [
+              { id: 1, farmer: "Raju Shetty", animal: "Bella", urgency: "Critical", symptom: "Fever, reduced feed intake, and swollen hind leg." },
+              { id: 2, farmer: "Anitha Kumar", animal: "Moti", urgency: "Moderate", symptom: "Cough, mild discharge, and lower milk yield." },
+              { id: 3, farmer: "Naveen Rao", animal: "Daisy", urgency: "Normal", symptom: "Loose stool and dehydration signs." },
+            ];
+
+            const urgencyClass = (value) => {
+              const normalized = String(value || "").toLowerCase();
+              if (normalized === "critical") return "tag tag-red";
+              if (normalized === "moderate") return "tag tag-amber";
+              if (normalized === "normal") return "tag tag-green";
+              return "tag tag-blue";
+            };
+
+            return (
+              <div className="grid gap-3">
+                {consultations.map((c) => (
+                  <div key={c.id} className="consult-row">
+                    <div className="consult-main">
+                      <div style={{ fontWeight: 600 }}>{c.farmer} — {c.animal}</div>
+                      <div className="text-sm text-muted">{c.symptom}</div>
+                    </div>
+                    <div className="consult-actions">
+                      <span className={urgencyClass(c.urgency)}>{c.urgency}</span>
+                      {String(currentUser?.role || "").toLowerCase() === 'doctor' || isAdmin ? (
+                        <button className="btn btn-primary" type="button" onClick={() => setActiveTab?.('doctor')}>Open</button>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </SectionCard>
+
         {healthTab === "vacc" ? (
           <>
             <SectionCard title="Log Vaccination" action={<span className="tag tag-blue">{pendingVaccinations.length} pending</span>}>
+              {!isAdmin ? (
+                <div className="hint-box">Only administrators can add or change vaccination records.</div>
+              ) : null}
               <form className="form-grid" onSubmit={submitVaccination}>
                 <label className="fg">
                   <span className="fl">Animal *</span>
@@ -995,7 +1306,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                     <option value="done">Done</option>
                   </select>
                 </label>
-                <button className="btn btn-primary" type="submit">
+                <button className="btn btn-primary" type="submit" disabled={!isAdmin}>
                   <Syringe size={14} /> Save
                 </button>
               </form>
@@ -1039,6 +1350,9 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
         {healthTab === "treatments" ? (
           <>
             <SectionCard title="Add Treatment">
+              {!isAdmin ? (
+                <div className="hint-box">Only administrators can add treatment records.</div>
+              ) : null}
               <form className="form-grid" onSubmit={submitHealthRecord}>
                 <label className="fg">
                   <span className="fl">Animal *</span>
@@ -1063,7 +1377,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                   <span className="fl">Date</span>
                   <input className="fi" type="date" value={healthDraft.date} onChange={(event) => setHealthDraft((current) => ({ ...current, date: event.target.value }))} />
                 </label>
-                <button className="btn btn-primary" type="submit">
+                <button className="btn btn-primary" type="submit" disabled={!isAdmin}>
                   <Heart size={14} /> Save
                 </button>
               </form>
@@ -1173,6 +1487,9 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
         {feedTab === "inventory" ? (
           <>
             <SectionCard title="Add Feeder">
+              {!isAdmin ? (
+                <div className="hint-box">Only administrators can add or edit feeders.</div>
+              ) : null}
               <form className="form-grid" onSubmit={submitFeeder}>
                 <label className="fg">
                   <span className="fl">Location *</span>
@@ -1206,7 +1523,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                   <span className="fl">Feed Quantity</span>
                   <input className="fi" type="number" value={feederDraft.feedQuantity} onChange={(event) => setFeederDraft((current) => ({ ...current, feedQuantity: event.target.value }))} />
                 </label>
-                <button className="btn btn-primary" type="submit">
+                <button className="btn btn-primary" type="submit" disabled={!isAdmin}>
                   <Plus size={14} /> Save Feeder
                 </button>
               </form>
@@ -1250,6 +1567,9 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
         {feedTab === "log" ? (
           <>
             <SectionCard title="Log Feed Consumption">
+              {!isAdmin ? (
+                <div className="hint-box">Only administrators can log consumption. Contact an admin to record feed logs.</div>
+              ) : null}
               <form className="form-grid" onSubmit={submitFeedLog}>
                 <label className="fg">
                   <span className="fl">Animal *</span>
@@ -1269,7 +1589,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                   <span className="fl">Amount *</span>
                   <input className="fi" type="number" value={feedLogDraft.quantity} onChange={(event) => setFeedLogDraft((current) => ({ ...current, quantity: event.target.value }))} required />
                 </label>
-                <button className="btn btn-primary" type="submit">
+                <button className="btn btn-primary" type="submit" disabled={!isAdmin}>
                   <Zap size={14} /> Log
                 </button>
               </form>
@@ -1310,24 +1630,107 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
             </SectionCard>
           </>
         ) : null}
+
+        <SectionCard title="Doctor Appointments">
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <div style={{ flex: 1 }}>
+              <form className="form-grid" onSubmit={submitAppointment}>
+                <label className="fg">
+                  <span className="fl">Animal *</span>
+                  <select className="fs" value={appointmentDraft.animalId} onChange={(e) => setAppointmentDraft((c) => ({ ...c, animalId: e.target.value }))} required>
+                    <option value="">Select...</option>
+                    {animals.map((a) => <option key={a._id} value={a._id}>{a.name}</option>)}
+                  </select>
+                </label>
+                <label className="fg">
+                  <span className="fl">Date & Time *</span>
+                  <input className="fi" type="datetime-local" value={appointmentDraft.appointment_date} onChange={(e) => setAppointmentDraft((c) => ({ ...c, appointment_date: e.target.value }))} required />
+                </label>
+                <label className="fg">
+                  <span className="fl">Symptoms / Notes</span>
+                  <input className="fi" value={appointmentDraft.symptoms} onChange={(e) => setAppointmentDraft((c) => ({ ...c, symptoms: e.target.value }))} placeholder="Brief description" />
+                </label>
+                <div>
+                  <button className="btn btn-primary" type="submit">Request Appointment</button>
+                </div>
+              </form>
+            </div>
+
+            <div style={{ flex: 1 }}>
+              <div className="stack-gap">
+                <div style={{ fontWeight: 700, marginBottom: 8 }}>Upcoming Appointments</div>
+                {loadingAppointments ? <div>Loading...</div> : (
+                  appointments.length ? appointments.map((app) => (
+                    <div key={app._id} className="rounded-2xl border p-3">
+                      <div style={{ fontWeight: 600 }}>{app.animal ? app.animal.name : 'Unknown animal'}</div>
+                      <div style={{ fontSize: 12 }}>{app.symptoms}</div>
+                      <div style={{ marginTop: 6 }}><small>{app.appointment_date ? new Date(app.appointment_date).toLocaleString() : (app.createdAt ? new Date(app.createdAt).toLocaleString() : 'Requested')}</small></div>
+                      <div style={{ marginTop: 6 }}>
+                        <small>Delay: {timeUntil(app.appointment_date || app.createdAt)}</small>
+                      </div>
+                      <div style={{ marginTop: 6 }}><span className={`tag tag-${toneForStatus(app.status)}`}>{app.status || 'pending'}</span></div>
+                    </div>
+                  )) : <div className="empty-state">No appointments found.</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </SectionCard>
       </>
     );
   };
 
   const renderReports = () => (
     <div className="report-grid">
+      <div className="report-card report-alerts">
+        <div className="report-head">
+          <strong>Feed Alerts</strong>
+          <span>Animals with low intake or not fed recently</span>
+        </div>
+        <div className="report-body">
+          {animals && animals.length ? (
+            (() => {
+              const alerts = animals.filter(isFeedAlert);
+              if (!alerts.length) return <div className="empty-state">No feed alerts</div>;
+              return (
+                <div className="alerts-list">
+                  {alerts.map((a) => {
+                    const level = feedLevelNumeric(a);
+                    const lastFed = a.lastFed || a.last_fed || a.lastFeed || null;
+                    const days = daysSince(lastFed);
+                    const reason = String(a.feedIntake || '').toLowerCase();
+                    const values = level != null ? [Math.max(0, level - 8), Math.max(0, level - 3), level] : [0, 10, 20];
+                    return (
+                      <div className="alert-row" key={a._id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px dashed #eee'}}>
+                        <div style={{display:'flex',alignItems:'center',gap:8}}>
+                          <div style={{width:36,height:36,display:'flex',alignItems:'center',justifyContent:'center',borderRadius:6,background:'#fafafa',border:'1px solid #eee'}}>{animalEmoji(a.type || a.species)}</div>
+                          <div>
+                            <div style={{fontWeight:600}}>{a.name || a.tag || a._id}</div>
+                            <div style={{fontSize:12,color:'#666'}}>{reason || (days === Infinity ? 'No feed data' : `${days}d since fed`)}</div>
+                          </div>
+                        </div>
+                        <div style={{display:'flex',alignItems:'center',gap:12}}>
+                          <Sparkline values={values} />
+                          <div style={{fontSize:12,color:'#333'}}>{level != null ? `${level}%` : ''}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()
+          ) : (
+            <div className="empty-state">No animals data</div>
+          )}
+        </div>
+      </div>
       <div className="report-card">
         <div className="report-head">
           <strong>Herd Report</strong>
           <span>Animals and status</span>
         </div>
         <div className="report-actions">
-          <button className="btn btn-outline" type="button" onClick={() => downloadCSV("herd_report.csv", [["Name", "Type", "Breed", "Gender", "DOB", "Weight", "Pen", "Tag", "Status"], ...animals.map((animal) => [animal.name, animal.type, animal.breed, animal.gender, animal.dob, animal.weight, animal.pen, animal.tag, animal.status])])}>
-            Download CSV
-          </button>
-          <button className="btn btn-primary" type="button" onClick={() => exportWorkbook("herd_report", [{ name: "Herd", headers: ["Name", "Type", "Breed", "Gender", "DOB", "Weight", "Pen", "Tag", "Status"], rows: animals.map((animal) => [animal.name, animal.type, animal.breed, animal.gender, animal.dob, animal.weight, animal.pen, animal.tag, animal.status]) }])}>
-            Export Excel
-          </button>
+          {/* Exports removed — show graphs/alerts only */}
         </div>
       </div>
 
@@ -1336,14 +1739,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
           <strong>Vaccination Report</strong>
           <span>History and pending</span>
         </div>
-        <div className="report-actions">
-          <button className="btn btn-outline" type="button" onClick={() => downloadCSV("vaccination_report.csv", [["Animal", "Vaccine", "Due Date", "Status"], ...vaccinations.map((vaccination) => [animalsById.get(String(vaccination.animalId || vaccination.animal?._id))?.name || "", vaccination.vaccineType || vaccination.vaccine, vaccination.dueDate || vaccination.next, vaccination.status])])}>
-            Download CSV
-          </button>
-          <button className="btn btn-primary" type="button" onClick={() => exportWorkbook("vaccination_report", [{ name: "Vaccination", headers: ["Animal", "Vaccine", "Due Date", "Status"], rows: vaccinations.map((vaccination) => [animalsById.get(String(vaccination.animalId || vaccination.animal?._id))?.name || "", vaccination.vaccineType || vaccination.vaccine, vaccination.dueDate || vaccination.next, vaccination.status]) }])}>
-            Export Excel
-          </button>
-        </div>
+        <div className="report-actions">{/* Exports removed — show graphs/alerts only */}</div>
       </div>
 
       <div className="report-card">
@@ -1351,14 +1747,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
           <strong>Health Report</strong>
           <span>Treatment records</span>
         </div>
-        <div className="report-actions">
-          <button className="btn btn-outline" type="button" onClick={() => downloadCSV("health_report.csv", [["Animal", "Condition", "Treatment", "Date"], ...healthRecords.map((record) => [animalsById.get(String(record.animalId || record.animal?._id))?.name || "", record.condition, record.treatment || record.medicine, record.date])])}>
-            Download CSV
-          </button>
-          <button className="btn btn-primary" type="button" onClick={() => exportWorkbook("health_report", [{ name: "Health", headers: ["Animal", "Condition", "Treatment", "Date"], rows: healthRecords.map((record) => [animalsById.get(String(record.animalId || record.animal?._id))?.name || "", record.condition, record.treatment || record.medicine, record.date]) }])}>
-            Export Excel
-          </button>
-        </div>
+        <div className="report-actions">{/* Exports removed — show graphs/alerts only */}</div>
       </div>
 
       <div className="report-card">
@@ -1366,65 +1755,100 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
           <strong>Feed Report</strong>
           <span>Inventory and consumption</span>
         </div>
-        <div className="report-actions">
-          <button className="btn btn-outline" type="button" onClick={() => downloadCSV("feed_report.csv", [["Location", "Status", "Feed Level", "Battery", "Schedule"], ...feeders.map((feeder) => [feeder.location, feeder.status, feeder.feedLevel, feeder.batteryLevel, feeder.schedule])])}>
-            Download CSV
-          </button>
-          <button className="btn btn-primary" type="button" onClick={() => exportWorkbook("feed_report", [{ name: "Feed", headers: ["Location", "Status", "Feed Level", "Battery", "Schedule"], rows: feeders.map((feeder) => [feeder.location, feeder.status, feeder.feedLevel, feeder.batteryLevel, feeder.schedule]) }])}>
-            Export Excel
-          </button>
-        </div>
+        <div className="report-actions">{/* Exports removed — show graphs/alerts only */}</div>
       </div>
 
       <div className="report-card report-card-wide">
         <div className="report-head">
           <strong>Full Operations Pack</strong>
-          <span>One-click workbook for the whole farm</span>
+          <span>Overview and dashboards</span>
         </div>
-        <button className="btn btn-primary" type="button" onClick={() => exportWorkbook("farm_report", [
-          {
-            name: "Herd",
-            headers: ["Name", "Type", "Breed", "Gender", "DOB", "Weight", "Pen", "Tag", "Status"],
-            rows: animals.map((animal) => [animal.name, animal.type, animal.breed, animal.gender, animal.dob, animal.weight, animal.pen, animal.tag, animal.status]),
-          },
-          {
-            name: "Health",
-            headers: ["Animal", "Condition", "Treatment", "Date"],
-            rows: healthRecords.map((record) => [animalsById.get(String(record.animalId || record.animal?._id))?.name || "", record.condition, record.treatment || record.medicine, record.date]),
-          },
-          {
-            name: "Vaccination",
-            headers: ["Animal", "Vaccine", "Due Date", "Status"],
-            rows: vaccinations.map((vaccination) => [animalsById.get(String(vaccination.animalId || vaccination.animal?._id))?.name || "", vaccination.vaccineType || vaccination.vaccine, vaccination.dueDate || vaccination.next, vaccination.status]),
-          },
-          {
-            name: "Feed",
-            headers: ["Location", "Status", "Feed Level", "Battery", "Schedule"],
-            rows: feeders.map((feeder) => [feeder.location, feeder.status, feeder.feedLevel, feeder.batteryLevel, feeder.schedule]),
-          },
-        ])}>
-          Export Excel Pack
-        </button>
+        <div className="report-actions">{/* Full operations export removed — show graphs/alerts only */}</div>
       </div>
     </div>
   );
 
   const renderStaff = () => (
     <>
+      {isAdmin ? (
+        <SectionCard title="All Users">
+          <div className="table-wrap">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Farmer ID</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loadingUsers ? (
+                  <tr><td colSpan="5">Loading users...</td></tr>
+                ) : usersList.length ? usersList.map((u) => (
+                  <tr key={u._id}>
+                    <td style={{ fontWeight: 600 }}>{u.name}</td>
+                    <td>{u.farmerId || '-'}</td>
+                    <td>{u.role || 'Staff'}</td>
+                    <td>{u.status || 'Active'}</td>
+                    <td>
+                      {String(u.role || '').toLowerCase() !== 'admin' ? (
+                        <button className="btn btn-outline" type="button" onClick={async () => {
+                          try {
+                            await requestJson(`/users/${u._id}/role`, { method: 'POST', body: JSON.stringify({ role: 'Admin' }) });
+                            setFlash(`Promoted ${u.farmerId || u.name} to Admin.`);
+                            await loadUsers();
+                          } catch (err) {
+                            setFlash('Promotion failed: ' + err.message);
+                          }
+                        }}>Promote to Admin</button>
+                      ) : (<span className="tag tag-blue">Admin</span>)}
+                      <button
+                        className="btn btn-danger"
+                        type="button"
+                        style={{ marginLeft: 8 }}
+                        disabled={String(currentUser?._id) === String(u._id)}
+                        onClick={async () => {
+                          try {
+                            await requestJson(`/users/${u._id}`, { method: 'DELETE' });
+                            setFlash(`Removed ${u.farmerId || u.name}.`);
+                            await loadUsers();
+                          } catch (err) {
+                            setFlash('Remove failed: ' + err.message);
+                          }
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr><td colSpan="5"><div className="empty-state">No users found.</div></td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </SectionCard>
+      ) : null}
       <SectionCard title="Add New User">
+        {!isAdmin ? (
+          <div className="hint-box">Only administrators can create or modify user accounts.</div>
+        ) : (
         <form className="form-grid" onSubmit={submitStaff}>
           <label className="fg">
             <span className="fl">Name *</span>
             <input className="fi" value={staffDraft.name} onChange={(event) => setStaffDraft((current) => ({ ...current, name: event.target.value }))} placeholder="Full Name" required />
           </label>
           <label className="fg">
-            <span className="fl">Email *</span>
-            <input className="fi" type="email" value={staffDraft.email} onChange={(event) => setStaffDraft((current) => ({ ...current, email: event.target.value }))} placeholder="email@farm.com" required />
+            <span className="fl">Farmer ID *</span>
+            <input className="fi" value={staffDraft.farmerId} onChange={(event) => setStaffDraft((current) => ({ ...current, farmerId: event.target.value }))} placeholder="e.g. farmer007" required />
           </label>
           <label className="fg">
             <span className="fl">Role</span>
             <select className="fs" value={staffDraft.role} onChange={(event) => setStaffDraft((current) => ({ ...current, role: event.target.value }))}>
               <option>Admin</option>
+              <option>Doctor</option>
               <option>Staff</option>
               <option>HoD</option>
             </select>
@@ -1440,10 +1864,11 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
             <span className="fl">Phone</span>
             <input className="fi" value={staffDraft.phone} onChange={(event) => setStaffDraft((current) => ({ ...current, phone: event.target.value }))} placeholder="Contact number" />
           </label>
-          <button className="btn btn-primary" type="submit">
+          <button className="btn btn-primary" type="submit" disabled={!isAdmin}>
             <Plus size={14} /> Add User
           </button>
         </form>
+        )}
       </SectionCard>
 
       <SectionCard title="Users">
@@ -1515,6 +1940,160 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
     </SectionCard>
   );
 
+  const renderDoctor = () => {
+    const consultations = [
+      {
+        id: 1,
+        farmer: "Raju Shetty",
+        animal: "Bella",
+        urgency: "Critical",
+        symptom: "Fever, reduced feed intake, and swollen hind leg.",
+      },
+      {
+        id: 2,
+        farmer: "Anitha Kumar",
+        animal: "Moti",
+        urgency: "Moderate",
+        symptom: "Cough, mild discharge, and lower milk yield.",
+      },
+      {
+        id: 3,
+        farmer: "Naveen Rao",
+        animal: "Daisy",
+        urgency: "Normal",
+        symptom: "Loose stool and dehydration signs.",
+      },
+    ];
+
+    const patients = [
+      { name: "Bella", status: "Stable", weight: "420 kg" },
+      { name: "Moti", status: "Watch", weight: "510 kg" },
+      { name: "Daisy", status: "Recovering", weight: "390 kg" },
+    ];
+
+    const urgencyClass = (value) => {
+      const normalized = String(value || "").toLowerCase();
+      if (normalized === "critical") return "tag tag-red";
+      if (normalized === "moderate") return "tag tag-amber";
+      if (normalized === "normal") return "tag tag-green";
+      return "tag tag-blue";
+    };
+
+    return (
+      <div className="space-y-4">
+        <SectionCard title="Doctor dashboard" action={<span className="tag tag-blue">Floating module</span>}>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+            <MetricCard label="Pending Consultations" value="5" sublabel="Awaiting review" tone="red" />
+            <MetricCard label="Today's Appointments" value="8" sublabel="Scheduled today" tone="blue" />
+            <MetricCard label="Total Patients" value="120" sublabel="Assigned to doctor" tone="green" />
+            <MetricCard label="Average Rating" value="4.8⭐" sublabel="Latest feedback" tone="amber" />
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Recent consultations">
+          <div className="grid gap-3">
+            {consultations.map((consultation) => (
+              <div key={consultation.id} className="rounded-2xl border border-[var(--gray-200)] bg-[var(--gray-50)] p-4 shadow-sm">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <div className="font-semibold text-[var(--gray-800)]">{consultation.farmer}</div>
+                    <div className="mt-1 text-sm text-[var(--gray-600)]">{consultation.animal}</div>
+                    <p className="mt-2 max-w-3xl text-sm text-[var(--gray-600)]">{consultation.symptom}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={urgencyClass(consultation.urgency)}>{consultation.urgency}</span>
+                    <button type="button" className="btn btn-primary">View Details</button>
+                    { (String(currentUser?.role || '').toLowerCase() === 'doctor' || isAdmin) ? (
+                      <> 
+                        <button type="button" className="btn btn-success" onClick={() => {
+                          // toggle diagnosis form
+                          setDiagnosisDrafts((d) => ({ ...d, [consultation._id || consultation.id]: d[consultation._id || consultation.id] ? undefined : { diagnosis: '', medicine_name: '', dosage: '', frequency: '', duration_days: 7 } }));
+                        }}>Add Diagnosis</button>
+                      </>
+                    ) : null}
+                  </div>
+                  {diagnosisDrafts[consultation._id || consultation.id] ? (
+                    <form className="mt-3" onSubmit={async (e) => {
+                      e.preventDefault();
+                      const key = consultation._id || consultation.id;
+                      const draft = diagnosisDrafts[key];
+                      setProcessingDiagnosis((p) => ({ ...p, [key]: true }));
+                      try {
+                        await requestJson(`/consultations/${consultation._id || consultation.id}/prescription`, {
+                          method: 'POST',
+                          body: JSON.stringify({
+                            diagnosis: draft.diagnosis,
+                            prescription: [{ medicine_name: draft.medicine_name, dosage: draft.dosage, frequency: draft.frequency, duration_days: Number(draft.duration_days) }],
+                            status: 'completed'
+                          })
+                        });
+                        setFlash('Prescription saved');
+                        setDiagnosisDrafts((d) => { const copy = { ...d }; delete copy[key]; return copy; });
+                        await loadAppointments();
+                      } catch (err) {
+                        setFlash('Unable to save prescription: ' + err.message);
+                      } finally {
+                        setProcessingDiagnosis((p) => ({ ...p, [key]: false }));
+                      }
+                    }}>
+                      <label className="fg"><span className="fl">Diagnosis</span><input className="fi" value={diagnosisDrafts[consultation._id || consultation.id].diagnosis} onChange={(e)=> setDiagnosisDrafts((d)=>({ ...d, [consultation._id||consultation.id]: { ...d[consultation._id||consultation.id], diagnosis: e.target.value } }))} required /></label>
+                      <label className="fg"><span className="fl">Medicine</span><input className="fi" value={diagnosisDrafts[consultation._id || consultation.id].medicine_name} onChange={(e)=> setDiagnosisDrafts((d)=>({ ...d, [consultation._id||consultation.id]: { ...d[consultation._id||consultation.id], medicine_name: e.target.value } }))} required /></label>
+                      <label className="fg"><span className="fl">Dosage</span><input className="fi" value={diagnosisDrafts[consultation._id || consultation.id].dosage} onChange={(e)=> setDiagnosisDrafts((d)=>({ ...d, [consultation._id||consultation.id]: { ...d[consultation._id||consultation.id], dosage: e.target.value } }))} /></label>
+                      <label className="fg"><span className="fl">Frequency</span><input className="fi" value={diagnosisDrafts[consultation._id || consultation.id].frequency} onChange={(e)=> setDiagnosisDrafts((d)=>({ ...d, [consultation._id||consultation.id]: { ...d[consultation._id||consultation.id], frequency: e.target.value } }))} /></label>
+                      <label className="fg"><span className="fl">Duration (days)</span><input className="fi" type="number" value={diagnosisDrafts[consultation._id || consultation.id].duration_days} onChange={(e)=> setDiagnosisDrafts((d)=>({ ...d, [consultation._id||consultation.id]: { ...d[consultation._id||consultation.id], duration_days: e.target.value } }))} /></label>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button className="btn btn-primary" type="submit" disabled={processingDiagnosis[consultation._id || consultation.id]}>Save</button>
+                        <button className="btn btn-outline" type="button" onClick={() => setDiagnosisDrafts((d)=>{ const c={...d}; delete c[consultation._id||consultation.id]; return c; })}>Cancel</button>
+                      </div>
+                    </form>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+
+        <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+          <SectionCard title="My patients">
+            <div className="grid gap-3 md:grid-cols-3">
+              {patients.map((patient) => (
+                <div key={patient.name} className="rounded-2xl border border-[var(--gray-200)] bg-white p-4 shadow-sm">
+                  <div className="font-semibold text-[var(--gray-800)]">{patient.name}</div>
+                  <div className="mt-1 text-sm text-[var(--gray-600)]">Last weight: {patient.weight}</div>
+                  <div className="mt-2"><StatusTag value={patient.status} /></div>
+                </div>
+              ))}
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Analytics">
+            <div className="rounded-2xl border border-[var(--gray-200)] bg-white p-4 shadow-sm">
+              <div className="mb-3 text-sm font-semibold text-[var(--gray-600)]">Disease distribution</div>
+              <div className="space-y-3">
+                {[
+                  ["FMD", 30],
+                  ["Mastitis", 25],
+                  ["Diarrhea", 20],
+                  ["Others", 25],
+                ].map(([label, value]) => (
+                  <div key={label}>
+                    <div className="mb-1 flex items-center justify-between text-sm">
+                      <span>{label}</span>
+                      <span>{value}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-[var(--gray-100)]">
+                      <div className="h-2 rounded-full bg-gradient-to-r from-[var(--green-500)] to-[var(--blue-500)]" style={{ width: `${value}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </SectionCard>
+        </div>
+      </div>
+    );
+  };
+
   const renderSection = () => {
     switch (activeTab) {
       case "livestock":
@@ -1525,6 +2104,8 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
         return renderFeeding();
       case "reports":
         return renderReports();
+      case "doctor":
+        return renderDoctor();
       case "staff":
         return renderStaff();
       case "settings":
@@ -1534,6 +2115,20 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
         return renderOverview();
     }
   };
+
+  const menuItems = [
+    { id: 'overview', label: 'Overview', icon: Activity },
+    { id: 'livestock', label: 'Livestock', icon: Users },
+    { id: 'health', label: 'Health', icon: Heart },
+    { id: 'feeding', label: 'Feeding', icon: Coffee },
+    { id: 'reports', label: 'Reports', icon: BarChart2 },
+    // show Doctor dashboard only to Doctor users or Admins
+    ...(String(currentUser?.role || '').toLowerCase() === 'doctor' || isAdmin
+      ? [{ id: 'doctor', label: 'Doctor', icon: Syringe }]
+      : []),
+    { id: 'staff', label: 'Staff', icon: UserPlus },
+    { id: 'settings', label: 'Settings', icon: Settings },
+  ];
 
   return (
     <main className="dashboard-shell">
@@ -1558,7 +2153,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
 
         <div className="nav-section-label">Main Menu</div>
         <nav className="sidebar-nav" aria-label="Main navigation">
-          {navItems.map((item) => {
+          {menuItems.map((item) => {
             const Icon = item.icon;
             const active = activeTab === item.id;
 

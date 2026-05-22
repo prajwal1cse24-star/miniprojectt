@@ -56,6 +56,25 @@ JWT_SECRET=abc123
 PORT=5000
 ```
 
+4. Registration PIN (local dev):
+
+```env
+REGISTER_PIN=1234
+```
+
+Only users who know the registration PIN can create new accounts from the frontend.
+
+Administrator registration and JWT guidance:
+
+- The first Admin account (bootstrap) can be created using `POST /api/auth/admin/register` with the `ADMIN_PIN` environment variable (default `admin123`).
+- After an Admin exists, creating additional Admin accounts requires an authenticated Admin token — `POST /api/auth/admin/register` must include an `Authorization: Bearer <token>` header from an Admin user.
+- Always set a stable `JWT_SECRET` in your environment for local development to avoid tokens becoming invalid after server restarts.
+
+```env
+ADMIN_PIN=admin123
+JWT_SECRET=dev-secret
+```
+
 ## Run
 
 Start both frontend and backend from the project root:
@@ -66,6 +85,15 @@ npm run dev
 
 - Frontend: http://localhost:5173
 - Backend: http://localhost:5000
+
+### Environment
+
+Copy `.env.example` to `.env` at the project root and set any values you need. Important keys:
+
+- `JWT_SECRET` — keep this consistent across restarts so tokens remain valid during development.
+- `ADMIN_PIN` — used to bootstrap the first Admin account (default `admin123`).
+- `MONGO_URI` — optional, set to use MongoDB instead of the local file datastore.
+
 
 ## API Endpoints
 

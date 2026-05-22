@@ -1,3 +1,14 @@
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+.env
+dist/
+frontend/dist/
+*.log
+/.vscode/
+/.idea/
+coverage/
+.DS_Store
 # Node
 node_modules/
 **/node_modules/

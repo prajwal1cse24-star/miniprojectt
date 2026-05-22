@@ -3,38 +3,38 @@ import { ArrowUpRight, BarChart3, Brain, CalendarDays, CheckCircle2, Clock, Drop
 
 const features = [
   {
-    title: "Cattle records",
-    copy: "Keep each cow’s tag, breed, age, pen, and status in one searchable record.",
+    title: "Project records",
+    copy: "Keep every module, status, and update in one searchable software workspace.",
     icon: Heart,
     tone: "emerald",
   },
   {
-    title: "Milk production",
-    copy: "Track daily yield trends and compare production by animal or batch.",
+    title: "Activity trends",
+    copy: "Track usage patterns, progress, and adoption metrics across the app.",
     icon: Droplets,
     tone: "blue",
   },
   {
-    title: "Health and breeding",
-    copy: "Log treatments, vaccinations, and breeding cycles without leaving the dashboard.",
+    title: "Workflow tracking",
+    copy: "Log tasks, milestones, and approvals without leaving the dashboard.",
     icon: CalendarDays,
     tone: "amber",
   },
   {
     title: "Export-ready reports",
-    copy: "Generate PDF and Excel summaries for audits, sharing, and offline review.",
+    copy: "Generate PDF and Excel summaries for sharing, reviews, and offline use.",
     icon: FileSpreadsheet,
     tone: "violet",
   },
   {
-    title: "Feed and feeder control",
-    copy: "Stay ahead of low stock, feeding schedules, and feeder alerts.",
+    title: "Control center",
+    copy: "Stay ahead of alerts, schedules, and quick actions from a single surface.",
     icon: Zap,
     tone: "teal",
   },
   {
-    title: "Staff and analytics",
-    copy: "Keep roles, activity, and herd analytics organized for the whole farm.",
+    title: "Teams and analytics",
+    copy: "Keep roles, activity, and analytics organized for the whole team.",
     icon: Users,
     tone: "rose",
   },
@@ -48,27 +48,27 @@ const stats = [
 ];
 
 const insights = [
-  { label: "AI herd snapshot", value: "98%" },
-  { label: "Milk trend", value: "+12.4%" },
-  { label: "Low stock alerts", value: "0" },
+  { label: "Live workspace", value: "98%" },
+  { label: "Adoption trend", value: "+12.4%" },
+  { label: "Pending alerts", value: "0" },
 ];
 
 const guide = [
   {
     title: "Sign in or register",
-    copy: "Create a local account, then open the dashboard with your saved token.",
+    copy: "Create a local account, then open the floating dashboard with your saved token.",
   },
   {
-    title: "Check the herd snapshot",
-    copy: "Review animal counts, feed inventory, and alerts from the overview cards.",
+    title: "Check the workspace snapshot",
+    copy: "Review modules, activity cards, and alerts from the overview panels.",
   },
   {
     title: "Log daily activity",
-    copy: "Add animals, treatments, vaccinations, feeders, and feed logs as the day changes.",
+    copy: "Add records, tasks, updates, and reports as the day changes.",
   },
   {
     title: "Export and share",
-    copy: "Use the reports and staff sections to keep records organized for the whole team.",
+    copy: "Use the reports and team sections to keep records organized for everyone.",
   },
 ];
 
@@ -78,14 +78,14 @@ const AuthShowcase = () => {
       <div className="auth-showcase-top">
         <div>
           <p className="eyebrow">Designed for farm teams</p>
-          <h2>Clean data, strong visuals, and a premium farm OS feel.</h2>
+          <h2>Floating screens, strong visuals, and a premium farm software feel.</h2>
           <p className="section-note">
-            A sharper landing surface for operators, with an AI-style preview and colorful cards that feel judge-ready.
+            A sharper landing surface for users, with a floating preview and colorful cards that feel judge-ready.
           </p>
         </div>
         <div className="account-pill">
           <Shield size={14} />
-          Secure by default
+          Secure by design
         </div>
       </div>
 

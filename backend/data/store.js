@@ -14,6 +14,7 @@ const defaultDb = {
   feedLogs: [],
   vaccinations: [],
   healthRecords: [],
+  consultations: [],
   staff: [],
   notifications: [],
 };
@@ -27,6 +28,7 @@ const normalizeDb = (data) => ({
   feedLogs: Array.isArray(data?.feedLogs) ? data.feedLogs : [],
   vaccinations: Array.isArray(data?.vaccinations) ? data.vaccinations : [],
   healthRecords: Array.isArray(data?.healthRecords) ? data.healthRecords : [],
+  consultations: Array.isArray(data?.consultations) ? data.consultations : [],
   staff: Array.isArray(data?.staff) ? data.staff : [],
   notifications: Array.isArray(data?.notifications) ? data.notifications : [],
 });
@@ -52,6 +54,28 @@ const writeDb = async (data) => {
 
 const makeId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
+const slugify = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const ensureUniqueFarmerId = (db, preferred) => {
+  const base = slugify(preferred) || `user-${Date.now().toString(36)}`;
+  let candidate = base;
+  let suffix = 1;
+
+  while (
+    db.users.some((existing) => String(existing.farmerId || "").trim().toLowerCase() === candidate)
+  ) {
+    candidate = `${base}-${suffix}`;
+    suffix += 1;
+  }
+
+  return candidate;
+};
+
 export const getUsers = async () => {
   const db = await readDb();
   return db.users;
@@ -60,11 +84,27 @@ export const getUsers = async () => {
 export const addUser = async (user) => {
   const db = await readDb();
   const normalizedEmail = String(user.email || "").trim().toLowerCase();
+  const normalizedFarmerId = String(user.farmerId || "").trim().toLowerCase();
 
-  if (db.users.some((existing) => String(existing.email || "").trim().toLowerCase() === normalizedEmail)) {
+  if (normalizedEmail && db.users.some((existing) => String(existing.email || "").trim().toLowerCase() === normalizedEmail)) {
     throw new Error("Email already exists");
   }
-  const record = { ...user, email: normalizedEmail, _id: makeId() };
+
+  if (!normalizedFarmerId) {
+    throw new Error("Farmer ID is required");
+  }
+
+  if (db.users.some((existing) => String(existing.farmerId || "").trim().toLowerCase() === normalizedFarmerId)) {
+    throw new Error("Farmer ID already exists");
+  }
+
+  const record = {
+    ...user,
+    role: user.role || "Staff",
+    email: normalizedEmail,
+    farmerId: normalizedFarmerId,
+    _id: makeId(),
+  };
   db.users.push(record);
   await writeDb(db);
   return record;
@@ -74,6 +114,98 @@ export const getUserByEmail = async (email) => {
   const db = await readDb();
   const normalizedEmail = String(email || "").trim().toLowerCase();
   return db.users.find((user) => String(user.email || "").trim().toLowerCase() === normalizedEmail) || null;
+};
+
+export const getUserByFarmerId = async (farmerId) => {
+  const db = await readDb();
+  const normalizedFarmerId = String(farmerId || "").trim().toLowerCase();
+  return db.users.find((user) => String(user.farmerId || "").trim().toLowerCase() === normalizedFarmerId) || null;
+};
+
+export const ensureUserFarmerIds = async () => {
+  const db = await readDb();
+  let changed = false;
+
+  const updatedUsers = [];
+  for (const user of db.users) {
+    const current = String(user.farmerId || "").trim().toLowerCase();
+    if (current) {
+      updatedUsers.push({ ...user, farmerId: current });
+      continue;
+    }
+
+    changed = true;
+    const snapshot = { ...db, users: [...updatedUsers, ...db.users] };
+    const fallback = user.email ? String(user.email).split("@")[0] : user.name;
+    const generated = ensureUniqueFarmerId(snapshot, fallback);
+    updatedUsers.push({ ...user, farmerId: generated });
+  }
+
+  db.users = updatedUsers;
+
+  if (changed) {
+    await writeDb(db);
+  }
+};
+
+export const getUserById = async (id) => {
+  const db = await readDb();
+  return db.users.find((user) => String(user._id) === String(id)) || null;
+};
+
+export const updateUserRole = async (id, role) => {
+  const db = await readDb();
+  const index = db.users.findIndex((u) => String(u._id) === String(id));
+  if (index === -1) return null;
+  db.users[index] = { ...db.users[index], role };
+  await writeDb(db);
+  return db.users[index];
+};
+
+export const createUserByAdmin = async (user) => {
+  const db = await readDb();
+  const name = String(user.name || "").trim();
+  const preferredFarmerId = String(user.farmerId || "").trim().toLowerCase();
+  const role = String(user.role || "Staff").trim() || "Staff";
+  const status = String(user.status || "Active").trim() || "Active";
+  const phone = String(user.phone || "").trim();
+
+  if (!name || !preferredFarmerId) {
+    throw new Error("Name and Farmer ID are required");
+  }
+
+  const normalizedFarmerId = slugify(preferredFarmerId);
+  if (!normalizedFarmerId) {
+    throw new Error("Invalid Farmer ID");
+  }
+
+  if (db.users.some((existing) => String(existing.farmerId || "").trim().toLowerCase() === normalizedFarmerId)) {
+    throw new Error("Farmer ID already exists");
+  }
+
+  const record = {
+    _id: makeId(),
+    name,
+    farmerId: normalizedFarmerId,
+    email: user.email ? String(user.email).trim().toLowerCase() : `${normalizedFarmerId}@farm.local`,
+    role,
+    status,
+    phone,
+    createdAt: new Date().toISOString(),
+  };
+
+  db.users.push(record);
+  await writeDb(db);
+  return record;
+};
+
+export const deleteUserById = async (id) => {
+  const db = await readDb();
+  const index = db.users.findIndex((u) => String(u._id) === String(id));
+  if (index === -1) return null;
+  const [removed] = db.users.splice(index, 1);
+  await writeDb(db);
+  return removed;
 };
 
 export const getAnimals = async () => {
@@ -170,6 +302,45 @@ export const addVaccination = async (vaccination) => {
 export const getHealthRecords = async () => {
   const db = await readDb();
   return db.healthRecords;
+};
+
+export const getConsultations = async () => {
+  const db = await readDb();
+  return db.consultations || [];
+};
+
+export const addConsultation = async (consultation) => {
+  const db = await readDb();
+  const record = {
+    ...consultation,
+    _id: makeId(),
+    photos: consultation.photos || [],
+    status: consultation.status || 'pending',
+    createdAt: new Date().toISOString(),
+  };
+  db.consultations.push(record);
+  await writeDb(db);
+  return record;
+};
+
+export const getConsultationById = async (id) => {
+  const db = await readDb();
+  return db.consultations.find((c) => String(c._id) === String(id)) || null;
+};
+
+export const addPrescriptionToConsultation = async (id, prescription) => {
+  const db = await readDb();
+  const idx = db.consultations.findIndex((c) => String(c._id) === String(id));
+  if (idx === -1) return null;
+  db.consultations[idx] = {
+    ...db.consultations[idx],
+    diagnosis: prescription.diagnosis || db.consultations[idx].diagnosis,
+    prescription: prescription.prescription || db.consultations[idx].prescription || [],
+    status: prescription.status || 'completed',
+    updatedAt: new Date().toISOString(),
+  };
+  await writeDb(db);
+  return db.consultations[idx];
 };
 
 export const addHealthRecord = async (healthRecord) => {

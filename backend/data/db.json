@@ -4,145 +4,382 @@
       "name": "KUSUMA",
       "email": "prajwalangadi97@gmail.com",
       "password": "$2a$10$zDIw8ZJMye3zEJzAIYlZZuEvRYkrsZFFS2WklA/7KCvw9ugcGL9Gm",
-      "_id": "mou46qbl-yup0i5en"
+      "_id": "mou46qbl-yup0i5en",
+      "farmerId": "prajwalangadi97"
     },
     {
       "name": "Test Farm",
       "email": "test@farm.com",
       "password": "$2a$10$ChBGP7GJL6O2XmeLQj./4.St.OWY2dFGpoXZX2cqZpYCCulGUFiB.",
-      "_id": "mov7swi6-daez4q4i"
+      "_id": "mov7swi6-daez4q4i",
+      "farmerId": "test"
     },
     {
       "name": "Puskar",
       "email": "pushkar.aids24@cmrit.ac.in",
       "password": "$2a$10$O9xI/lkRKN/r7DNhFJY.iepUodlX.K1CQK3isftnBttD/2GzguWQe",
-      "_id": "mov7xxpi-3tz0l5v8"
+      "_id": "mov7xxpi-3tz0l5v8",
+      "farmerId": "pushkar-aids24"
     },
     {
       "name": "pu",
       "email": "p@gmail.com",
       "password": "$2a$10$yC3c4T9n8g4xR8rOUfMP0urQOnKMxG368AQ.J1NYdPEZl4dHN.Wcu",
-      "_id": "movelmaw-vpnk129v"
+      "_id": "movelmaw-vpnk129v",
+      "farmerId": "p"
     },
     {
       "name": "Puskar",
       "email": "prajwal1.cse24@gmail.com",
       "password": "$2a$10$1/0L9HTrj0ILY0vEcgiqt.4aYx8HZKCW4M4bookE64m1/y.T/9SUi",
-      "_id": "movemnii-cc41grj3"
+      "_id": "movemnii-cc41grj3",
+      "farmerId": "prajwal1-cse24"
     },
     {
       "name": "devraj",
       "email": "praju@gmail.com",
       "password": "$2a$10$luk3o8fEHRFn5wHk0OTTvegGsxqIsPCBsCAtLEnii/4g1fyhLQQem",
-      "_id": "movkw894-8af2jnnw"
+      "_id": "movkw894-8af2jnnw",
+      "farmerId": "praju"
     },
     {
       "name": "kkkk",
       "email": "dev@gmail.com",
       "password": "$2a$10$ungjDJrXEZ0VLy8VEbD9yedSnnHQ8zngD/RnJ.MR/YprNMKYxdnNO",
-      "_id": "movng3cb-3levjap6"
+      "_id": "movng3cb-3levjap6",
+      "farmerId": "dev"
     },
     {
       "name": "Farm Manager",
       "email": "manager@farm.com",
       "password": "$2a$10$28aI.m0E6BC93lX/iNDntuixdYJljqsfllbBinrYP0XlpunMXIK3C",
-      "_id": "mow8mql9-yregf8l5"
+      "_id": "mow8mql9-yregf8l5",
+      "farmerId": "manager"
     },
     {
       "name": "Farm Admin",
       "email": "farmdemo@test.com",
       "password": "$2a$10$2MI.JXczWTnRYGGlcfrYR.ZwkQW2Fi.lt7sJIuuE958LC/G5Paw6C",
-      "_id": "mp2tghxw-fidprksj"
+      "_id": "mp2tghxw-fidprksj",
+      "farmerId": "farmdemo"
     },
     {
       "name": "Demo Admin",
       "email": "demo@farm.com",
       "password": "$2a$10$bl7OAsfZ1NSYpPLGuKvhwODNVvtkSxaenhirZ.bnQb6SfASZ55K.a",
-      "_id": "mp2wqklx-pezzisoi"
+      "_id": "mp2wqklx-pezzisoi",
+      "farmerId": "demo"
     },
     {
       "name": "prajwal",
       "email": "prajwal@gmail.com",
       "password": "$2a$10$069qI4FFzFKADMfKDydRfeTMclEl2Y4cQIBJ879uATpY5upUSZH2a",
-      "_id": "mp2yf4t9-10s3dbg5"
+      "_id": "mp2yf4t9-10s3dbg5",
+      "farmerId": "prajwal"
     },
     {
       "name": "Test User",
       "email": "user20260513003901@example.com",
       "password": "$2a$10$5VVtdlL0.cbJCZAX4jHyluKDSRCQgYylQ1x4F9h.ncuPwvWDBxcV6",
-      "_id": "mp3080v6-ymjsnps5"
+      "_id": "mp3080v6-ymjsnps5",
+      "farmerId": "user20260513003901"
     },
     {
       "name": "Auto Test",
       "email": "autotest_1778613460129@farm.local",
       "password": "$2a$10$vujhWdDs5H71/ucnSi6jOuhXf2zAohJmPbk.Ns0GsXz8ExCxjqRm2",
-      "_id": "mp30j563-ce9o4q8v"
+      "_id": "mp30j563-ce9o4q8v",
+      "farmerId": "autotest-1778613460129"
     },
     {
       "name": "Auto Test",
       "email": "autotest_1778613479307@farm.local",
       "password": "$2a$10$592NN.uRcwleLx9Kr/XZg.HkesuO2xQqXcAViu5tl6YetUAb7T0CC",
-      "_id": "mp30jjyf-p2twto5i"
+      "_id": "mp30jjyf-p2twto5i",
+      "farmerId": "autotest-1778613479307"
     },
     {
       "name": "Auto Debug",
       "email": "debug_user_20260513_1@farm.local",
       "password": "$2a$10$CfT69Q1.iLpsIbuBfUnfQ.8NVAoyrah/jxn4T2mgJ.minW0VDy7/i",
-      "_id": "mp3rzlh0-0kxyirrv"
+      "_id": "mp3rzlh0-0kxyirrv",
+      "farmerId": "debug-user-20260513-1"
     },
     {
       "name": "PRAJWAL A N",
       "email": "prajwal1.cse24@cmrit.ac.in",
       "password": "$2a$10$UGYuPNP1sIYhvOJVq5UD2e2DpZNFYf8PGkSTXd9ENkGyYh0DvmXJu",
-      "_id": "mp3sf88s-wpaazmw9"
+      "_id": "mp3sf88s-wpaazmw9",
+      "farmerId": "prajwal1-cse24-1"
     },
     {
       "name": "Debug User",
       "email": "debugdemo@farm.local",
       "password": "$2a$10$TnxqHBdtaqRUkEc.MLRcR.eV/Pw6rmvShbUQ4iIamm13mSrfRmn/6",
-      "_id": "mp6v6odv-e3si0wat"
+      "_id": "mp6v6odv-e3si0wat",
+      "farmerId": "debugdemo"
     },
     {
       "name": "devuu",
       "email": "devaraj333@gmail.com",
       "password": "$2a$10$YzH5RRHeWhPGbf7bUmPiXeom65od95xORB8416Uc3.Y7dFD8/wWfW",
-      "_id": "mp77nznn-aoc33mr8"
+      "_id": "mp77nznn-aoc33mr8",
+      "farmerId": "devaraj333"
     },
     {
       "name": "Test User",
       "email": "tester+1778867652851@farm.local",
       "password": "$2a$10$nAJKGH78DG.H1yha0Bep2OEw1irU/Vm8en1q93.2slUB.UOkQaZ5C",
-      "_id": "mp77vdqx-1tn006hi"
+      "_id": "mp77vdqx-1tn006hi",
+      "farmerId": "tester-1778867652851"
     },
     {
       "name": "CI Tester",
       "email": "ci-tester@local",
       "password": "$2a$10$Co33uRHLbuY2KVxnw9C7HuqN7SofQOiNul5/nnTB87gTBc3uxnTSO",
-      "_id": "mp7wlirv-zjqp4r33"
+      "_id": "mp7wlirv-zjqp4r33",
+      "farmerId": "ci-tester"
     },
     {
       "name": "Debug Temp",
       "email": "debugtemp2026@farm.local",
       "password": "$2a$10$2EUUoD9VpfNhR/DDNENtBORx1NlN.MDKBS02H7l1TgzQPoJg7dULm",
-      "_id": "mp8o32no-cfmdkrcb"
+      "_id": "mp8o32no-cfmdkrcb",
+      "farmerId": "debugtemp2026"
     },
     {
       "name": "pooja",
       "email": "prah@gmail.com",
       "password": "$2a$10$gqglnyu66NGkB2xY/syRUe8NXhvYzrc6BJJMm3bee3NueSOiM5S9a",
-      "_id": "mpb34t4f-tks1u242"
+      "_id": "mpb34t4f-tks1u242",
+      "farmerId": "prah"
     },
     {
       "name": "Debug User 2",
       "email": "debuguser2_20260519@farm.local",
       "password": "$2a$10$JHgH2LBX3E9oUbDaOgqleuQdku3yJxNmJIj.dWPmuB7wrb9jBbPjC",
-      "_id": "mpcvocdy-n9wq5jaz"
+      "_id": "mpcvocdy-n9wq5jaz",
+      "farmerId": "debuguser2-20260519"
     },
     {
       "name": "Live Debug User",
       "email": "livecheck_20260519@farm.local",
       "password": "$2a$10$Hhl.sWfTtg6PvFztA0jr/OtsxKmixdQ5Be92dAAqAOjGRXGcXKW36",
-      "_id": "mpcwnt7d-2vewic24"
+      "_id": "mpcwnt7d-2vewic24",
+      "farmerId": "livecheck-20260519"
+    },
+    {
+      "name": "smokeTest",
+      "email": "smoketest+1@example.com",
+      "password": "$2a$10$a6SsQBU/2ewdAzCe9HBuZezSMdM2PEqU66t5PuHkoFbC1aPmszG6W",
+      "_id": "mpd2adbp-rxwwwm0q",
+      "farmerId": "smoketest-1"
+    },
+    {
+      "name": "smoketest",
+      "email": "smoketest_1779221338440@example.com",
+      "password": "$2a$10$LVgAwqrdM5WHP6mxdPZ0lu/9JRlr7Z9OOsdKrZFWBJ1RSMJnbMZcy",
+      "_id": "mpd2g37g-75ldp2ik",
+      "farmerId": "smoketest-1779221338440"
+    },
+    {
+      "name": "ram",
+      "email": "ram@gmail.com",
+      "password": "$2a$10$Yih.1wQnb5DhNj5siBixPu/UX0iaw7wmceLoQQcbApWVAP4IMfb06",
+      "_id": "mpd2j7dc-w4r1o2tf",
+      "farmerId": "ram"
+    },
+    {
+      "name": "Signup Test",
+      "email": "signup_test@example.com",
+      "password": "$2a$10$HoxDh3a3.WzJV.spoPCYXeV3OiLhD1WEpxvrJRvrhYszm5TL0U/o.",
+      "_id": "mpf5545h-pequ3nkx",
+      "farmerId": "signup-test"
+    },
+    {
+      "name": "AutoSignup",
+      "email": "autosignup@example.com",
+      "password": "$2a$10$f1wAJz//0z1xEhr3gjpYhepwPU/dWxnuUobtk17SAG7o3VekGvv.y",
+      "_id": "mpf59itc-m2a0cilb",
+      "farmerId": "autosignup"
+    },
+    {
+      "name": "AutoSignup",
+      "email": "autosignup3@example.com",
+      "password": "$2a$10$orUIJVZCTrPGXBdLg0urYOG8Y/hMVMuYbUrwTI/V1oiMrYnax1jaO",
+      "_id": "mpf5b4dx-12vc97dm",
+      "farmerId": "autosignup3"
+    },
+    {
+      "name": "AutoSignup",
+      "email": "autosignup4@example.com",
+      "password": "$2a$10$jdalU/Y8SS1bW0LQyIRiG.wrVyYbhYD/eqfRYNDDraVGQD9GCtkmy",
+      "_id": "mpf5bjh9-3o6gietf",
+      "farmerId": "autosignup4"
+    },
+    {
+      "name": "AutoSignupRun",
+      "email": "autosignuprun@example.com",
+      "password": "$2a$10$2nQD5qrsSKPiZg2oX1/bwetYN1GruevwsqpV.WSqAHiqkcwRqbbw6",
+      "_id": "mpf5du9n-k203vxwp",
+      "farmerId": "autosignuprun"
+    },
+    {
+      "name": "Smoke Test",
+      "email": "smoke_876421866-1779371476.56718@example.com",
+      "password": "$2a$10$R53uNuvijWKaDa5et7eFVe96MIOwMiaNTI7ukFuUMwxmlA6bQYWxO",
+      "_id": "mpf81olz-4y4c3uyj",
+      "farmerId": "smoke-876421866-1779371476-56718"
+    },
+    {
+      "name": "devraj",
+      "email": "praj@gmail.com",
+      "password": "$2a$10$aJU61letliegLiYz9KfxOe6bQe8qqf/Ou9qLimQjl7qd/C9RKGh1u",
+      "_id": "mpf8oudv-ky1dvs73",
+      "farmerId": "praj"
+    },
+    {
+      "name": "Doctor UI",
+      "email": "doctor_ui@example.com",
+      "password": "$2a$10$McIp3T5aMqSPybvuvQDNqejzqeyGdiSFBJ10TbkWKor9XMVfLzrue",
+      "role": "Doctor",
+      "_id": "mpf9zzo2-b6yzu998",
+      "farmerId": "doctor-ui"
+    },
+    {
+      "name": "Doctor Final",
+      "email": "doctor_ui_final@example.com",
+      "password": "$2a$10$b0R/S/YUf1fqcFF9lho.Tui19UOPczzJfRUbYYZd1hhXHrCxaG9qK",
+      "_id": "mpfa6ejc-jc1zphiy",
+      "farmerId": "doctor-ui-final"
+    },
+    {
+      "name": "TestUser",
+      "email": "test_1926204596@example.com",
+      "password": "$2a$10$Ti1YOExGOYfMQ45rP0JVouO468jsfGNOvOPvP0sdTZOelRneFYVC2",
+      "role": "Staff",
+      "_id": "mpff19qd-v22e1xiy",
+      "farmerId": "test-1926204596"
+    },
+    {
+      "name": "TestUser",
+      "email": "test_1023428934@example.com",
+      "password": "$2a$10$uSKlkk3h9Dd5hD5SqEIZYuWmHsfRXObKSdD.yg6Uy/lSxx1iXca..",
+      "role": "Staff",
+      "_id": "mpffqntm-d8zh3bkq",
+      "farmerId": "test-1023428934"
+    },
+    {
+      "name": "Farmer One",
+      "farmerId": "farmer_smoke_955366814",
+      "email": "farmer_smoke_955366814@farm.local",
+      "password": "$2a$10$LZfoMJ0Uv57/KQhjJSnAkew0/Dx84NL7r2kEIGpdYP3vgpdODB5le",
+      "role": "Staff",
+      "_id": "mpffycqq-8u4sgxkn"
+    },
+    {
+      "name": "NoPass User",
+      "farmerId": "nopass_1266264236",
+      "email": "nopass_1266264236@farm.local",
+      "role": "Staff",
+      "_id": "mpfgccx1-4v678mqx"
+    },
+    {
+      "name": "NoPass User",
+      "farmerId": "nopass_421339663",
+      "email": "nopass_421339663@farm.local",
+      "role": "Staff",
+      "_id": "mpfgoubo-8f1axb5w"
+    },
+    {
+      "_id": "mpfgw1ap-yo3mgvuq",
+      "name": "Managed User",
+      "farmerId": "test-managed-1390993574",
+      "email": "test-managed-1390993574@farm.local",
+      "role": "Staff",
+      "status": "Active",
+      "phone": "",
+      "createdAt": "2026-05-21T12:28:49.681Z"
+    },
+    {
+      "name": "Smoke User",
+      "farmerId": "smoke_980525206",
+      "email": "smoke_980525206@farm.local",
+      "role": "Staff",
+      "_id": "mpfh2urt-qym2lbfs"
+    },
+    {
+      "name": "Smoke User",
+      "farmerId": "smoke_1633814009",
+      "email": "smoke_1633814009@farm.local",
+      "role": "Staff",
+      "_id": "mpfh90ot-bi1fjvmy"
+    },
+    {
+      "name": "Smoke Farmer",
+      "farmerId": "smoketest_farmer",
+      "email": "smoketest_farmer@farm.local",
+      "role": "Staff",
+      "_id": "mpfj7e44-izutq598"
+    },
+    {
+      "_id": "mpfjox4g-pj831p8x",
+      "name": "Test Staff",
+      "farmerId": "staff-311104926",
+      "email": "staff-311104926@farm.local",
+      "role": "Staff",
+      "status": "Active",
+      "phone": "",
+      "createdAt": "2026-05-21T13:47:16.528Z"
+    },
+    {
+      "name": "Dbg Admin 1",
+      "farmerId": "dbg_admin_1",
+      "email": "dbg_admin_1@farm.local",
+      "role": "Staff",
+      "_id": "mpfjs0bi-1yqu7s9t"
+    },
+    {
+      "_id": "mpfjtup4-u4kesouw",
+      "name": "Smoke Test User",
+      "farmerId": "smoke-501772",
+      "email": "smoke-501772@farm.local",
+      "role": "Staff",
+      "status": "Active",
+      "phone": "",
+      "createdAt": "2026-05-21T13:51:06.664Z"
+    },
+    {
+      "name": "BootStrap Admin",
+      "farmerId": "bootstrap_admin",
+      "password": "$2a$10$T8y/PAvp1AR1YVC0wjkxtePXs0K80/5x122I1XbNlEidB1A2qp73i",
+      "role": "Admin",
+      "email": "",
+      "_id": "mpfk5enq-vozrlyw0"
+    },
+    {
+      "_id": "mpfkhmxc-iflw9a9o",
+      "name": "Smoke User",
+      "farmerId": "smoke-840",
+      "email": "smoke-840@farm.local",
+      "role": "Staff",
+      "status": "Active",
+      "phone": "",
+      "createdAt": "2026-05-21T14:09:36.336Z"
+    },
+    {
+      "name": "thimma",
+      "farmerId": "farmer001",
+      "email": "farmer001@farm.local",
+      "role": "Staff",
+      "_id": "mpgt61mw-vps89fra"
+    },
+    {
+      "name": "Test User",
+      "farmerId": "farmer999",
+      "email": "farmer999@farm.local",
+      "role": "Staff",
+      "_id": "mpgv3wz4-y9u36lnm"
     }
   ],
   "animals": [
@@ -189,12 +426,55 @@
       "lastChecked": "2026-05-16T18:16:49.755Z",
       "species": "Cattle",
       "_id": "mp8o4b52-o4evtk9e"
+    },
+    {
+      "name": "Test Cow",
+      "age": 3,
+      "type": "Cattle",
+      "_id": "mpf19c33-syoxqeml",
+      "createdAt": "2026-05-21T05:11:16.335Z"
+    },
+    {
+      "name": "Admin Cow",
+      "age": 5,
+      "type": "Cattle",
+      "_id": "mpf1glo8-js5e035f",
+      "createdAt": "2026-05-21T05:16:55.352Z"
+    },
+    {
+      "name": "SmokeAnimal",
+      "age": 2,
+      "type": "Cow",
+      "_id": "mpf81q88-v4r4iwun",
+      "createdAt": "2026-05-21T08:21:18.728Z"
     }
   ],
   "feeders": [],
   "feedLogs": [],
   "vaccinations": [],
   "healthRecords": [],
-  "staff": [],
+  "consultations": [
+    {
+      "animalId": "mov7zhuz-t2b4btjf",
+      "appointment_date": "2026-05-23T10:00:00.000Z",
+      "symptoms": "Test appointment via PowerShell",
+      "_id": "mpgvxstz-zg4jy57f",
+      "photos": [],
+      "status": "pending",
+      "createdAt": "2026-05-22T12:17:52.439Z"
+    }
+  ],
+  "staff": [
+    {
+      "name": "prajwal",
+      "role": "Staff",
+      "email": "staff@gmail.com",
+      "phone": "6584789654",
+      "status": "Active",
+      "joined": "2026-05-20",
+      "_id": "mpdkpcee-4uq7xydh",
+      "createdAt": "2026-05-20T04:40:03.590Z"
+    }
+  ],
   "notifications": []
 }

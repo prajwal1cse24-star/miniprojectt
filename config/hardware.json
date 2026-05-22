@@ -1,0 +1,8 @@
+{
+  "minRamGB": 2,
+  "recommendedRamGB": 4,
+  "minCpuCores": 1,
+  "recommendedCpuCores": 2,
+  "storageGB": 5,
+  "notes": "Example hardware requirements for lightweight deployments. Edit config/hardware.json to adjust."
+}

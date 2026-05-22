@@ -7,6 +7,7 @@
     "dev:client": "vite",
     "dev:server": "kill-port 5000 && npm run dev --prefix backend",
     "dev": "node scripts/dev.mjs",
+    "check:hardware": "node scripts/check_hardware.mjs",
     "build": "vite build"
   },
   "dependencies": {
@@ -21,8 +22,7 @@
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
     "react-router-dom": "^6.22.0",
-    "recharts": "^3.8.1",
-    "xlsx": "^0.18.5"
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",
