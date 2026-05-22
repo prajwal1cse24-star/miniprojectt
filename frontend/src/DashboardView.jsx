@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import * as Icons from "lucide-react";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { showNotification } from "./notifications";
 
 const { Activity, AlertTriangle, CircleAlert, Users, Settings, Bell, FileText, Archive, Edit2, Trash2, Heart, Coffee, BarChart2, UserPlus, LogOut, Search, RefreshCcw, Sun, Moon, CheckCircle, Syringe, Plus, Thermometer, Zap } = Icons;
@@ -181,6 +182,46 @@ const getDiseaseRiskDetails = (animal) => {
 
   return { reasons, cause };
 };
+
+// Lightweight Recharts-based report chart for feed consumption
+function ReportChart({ feedLogs = [], days = 14 }) {
+  // aggregate by date (YYYY-MM-DD)
+  const now = new Date();
+  const dayMs = 24 * 60 * 60 * 1000;
+  const start = new Date(now.getTime() - (days - 1) * dayMs);
+
+  const map = new Map();
+  for (let i = 0; i < days; i++) {
+    const d = new Date(start.getTime() + i * dayMs);
+    const key = d.toISOString().slice(0, 10);
+    map.set(key, 0);
+  }
+
+  (feedLogs || []).forEach((log) => {
+    const date = log.date || log.createdAt || log.timestamp || log.time;
+    const d = date ? new Date(date) : null;
+    const key = d ? d.toISOString().slice(0, 10) : null;
+    if (!key) return;
+    if (!map.has(key)) map.set(key, 0);
+    map.set(key, (map.get(key) || 0) + (Number(log.quantity) || 0));
+  });
+
+  const data = Array.from(map.entries()).map(([date, value]) => ({ date, value }));
+
+  return (
+    <div style={{ width: '100%', height: 160 }}>
+      <ResponsiveContainer>
+        <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="date" tickFormatter={(d) => d.slice(5)} />
+          <YAxis />
+          <Tooltip />
+          <Line type="monotone" dataKey="value" stroke="#4f46e5" strokeWidth={2} dot={{ r: 2 }} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
 const getJudgeNote = (riskLabel, riskDetails) => {
   if (riskLabel === "Normal") {
@@ -1755,7 +1796,11 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
           <strong>Feed Report</strong>
           <span>Inventory and consumption</span>
         </div>
-        <div className="report-actions">{/* Exports removed — show graphs/alerts only */}</div>
+        <div className="report-actions">{/* Exports removed — show graphs/alerts only */}
+          <div style={{marginTop:8}}>
+            <ReportChart feedLogs={feedLogs} days={14} />
+          </div>
+        </div>
       </div>
 
       <div className="report-card report-card-wide">
