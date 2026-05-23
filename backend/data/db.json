@@ -409,7 +409,7 @@
       "name": "prajwal",
       "farmerId": "998",
       "password": "$2a$10$KwQAlvAY4M/zVta0SHY.T.r38OnjIKvEO8A755X/vqJkRpoIjLZR2",
-      "role": "Farmer",
+      "role": "Admin",
       "email": "",
       "_id": "mphdi3kd-ey2s2e9p"
     },
@@ -1396,7 +1396,7 @@
     {
       "_id": "mphdi3kd-ey2s2e9p",
       "name": "prajwal",
-      "role": "Farmer",
+      "role": "Admin",
       "email": "998@farm.local",
       "phone": "",
       "status": "Active",

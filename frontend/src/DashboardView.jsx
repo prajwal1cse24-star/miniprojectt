@@ -588,6 +588,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
   const [appointmentDraft, setAppointmentDraft] = useState({ animalId: "", appointment_date: "", symptoms: "" });
   const [diagnosisDrafts, setDiagnosisDrafts] = useState({});
   const [processingDiagnosis, setProcessingDiagnosis] = useState({});
+  const [viewingDetails, setViewingDetails] = useState({});
 
   const [staffDraft, setStaffDraft] = useState({
     name: "",
@@ -2129,35 +2130,6 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
   );
 
   const renderDoctor = () => {
-    const consultations = [
-      {
-        id: 1,
-        farmer: "Raju Shetty",
-        animal: "Bella",
-        urgency: "Critical",
-        symptom: "Fever, reduced feed intake, and swollen hind leg.",
-      },
-      {
-        id: 2,
-        farmer: "Anitha Kumar",
-        animal: "Moti",
-        urgency: "Moderate",
-        symptom: "Cough, mild discharge, and lower milk yield.",
-      },
-      {
-        id: 3,
-        farmer: "Naveen Rao",
-        animal: "Daisy",
-        urgency: "Normal",
-        symptom: "Loose stool and dehydration signs.",
-      },
-    ];
-
-    const patients = [
-      { name: "Bella", status: "Stable", weight: "420 kg" },
-      { name: "Moti", status: "Watch", weight: "510 kg" },
-      { name: "Daisy", status: "Recovering", weight: "390 kg" },
-    ];
 
     const urgencyClass = (value) => {
       const normalized = String(value || "").toLowerCase();
@@ -2171,43 +2143,64 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
       <div className="space-y-4">
         <SectionCard title="Doctor dashboard" action={<span className="tag tag-blue">Floating module</span>}>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-            <MetricCard label="Pending Consultations" value="5" sublabel="Awaiting review" tone="red" cardClass="card-rose" />
-            <MetricCard label="Today's Appointments" value="8" sublabel="Scheduled today" tone="blue" cardClass="card-blue" />
-            <MetricCard label="Total Patients" value="120" sublabel="Assigned to doctor" tone="green" cardClass="card-emerald" />
+            <MetricCard label="Pending Consultations" value={appointments.filter(a => a.status === 'pending' || !a.status).length} sublabel="Awaiting review" tone="red" cardClass="card-rose" />
+            <MetricCard label="Total Appointments" value={appointments.length} sublabel="All time" tone="blue" cardClass="card-blue" />
+            <MetricCard label="Total Patients" value={animals.length} sublabel="Assigned to doctor" tone="green" cardClass="card-emerald" />
             <MetricCard label="Average Rating" value="4.8⭐" sublabel="Latest feedback" tone="amber" cardClass="card-amber" />
           </div>
         </SectionCard>
 
         <SectionCard title="Recent consultations">
           <div className="grid gap-3">
-            {consultations.map((consultation) => (
-              <div key={consultation.id} className="rounded-2xl border border-[var(--gray-200)] bg-[var(--gray-50)] p-4 shadow-sm">
+            {appointments.length > 0 ? appointments.map((consultation) => {
+              const id = consultation._id || consultation.id;
+              const isCritical = consultation.status === 'pending' || !consultation.status;
+              const urgency = isCritical ? 'Critical' : 'Normal';
+              return (
+              <div key={id} className="rounded-2xl border border-[var(--gray-200)] bg-[var(--gray-50)] p-4 shadow-sm">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div>
-                    <div className="font-semibold text-[var(--gray-800)]">{consultation.farmer}</div>
-                    <div className="mt-1 text-sm text-[var(--gray-600)]">{consultation.animal}</div>
-                    <p className="mt-2 max-w-3xl text-sm text-[var(--gray-600)]">{consultation.symptom}</p>
+                    <div className="font-semibold text-[var(--gray-800)]">Farm Owner</div>
+                    <div className="mt-1 text-sm text-[var(--gray-600)]">{consultation.animal ? consultation.animal.name : 'Unknown Animal'}</div>
+                    <p className="mt-2 max-w-3xl text-sm text-[var(--gray-600)]">{consultation.symptoms}</p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className={urgencyClass(consultation.urgency)}>{consultation.urgency}</span>
-                    <button type="button" className="btn btn-primary">View Details</button>
+                    <span className={urgencyClass(urgency)}>{urgency}</span>
+                    <button type="button" className="btn btn-primary" onClick={() => setViewingDetails(prev => ({ ...prev, [id]: !prev[id] }))}>
+                      {viewingDetails[id] ? "Hide Details" : "View Details"}
+                    </button>
                     { (String(currentUser?.role || '').toLowerCase() === 'doctor' || isAdmin) ? (
                       <> 
                         <button type="button" className="btn btn-success" onClick={() => {
                           // toggle diagnosis form
-                          setDiagnosisDrafts((d) => ({ ...d, [consultation._id || consultation.id]: d[consultation._id || consultation.id] ? undefined : { diagnosis: '', medicine_name: '', dosage: '', frequency: '', duration_days: 7 } }));
+                          setDiagnosisDrafts((d) => ({ ...d, [id]: d[id] ? undefined : { diagnosis: '', medicine_name: '', dosage: '', frequency: '', duration_days: 7 } }));
                         }}>Add Diagnosis</button>
                       </>
                     ) : null}
                   </div>
-                  {diagnosisDrafts[consultation._id || consultation.id] ? (
+                  {viewingDetails[id] && (
+                    <div className="mt-4 rounded-lg bg-[var(--primary-light)] p-4 text-sm text-[var(--gray-800)]">
+                      <div className="mb-2 font-semibold text-[var(--primary-dark)]">Full Patient History</div>
+                      <div className="grid grid-cols-2 gap-y-2 gap-x-4">
+                        <div><strong>Owner / Farm:</strong> Farm Owner</div>
+                        <div><strong>Animal ID / Tag:</strong> {consultation.animal?.tag || 'N/A'}</div>
+                        <div><strong>Status:</strong> {consultation.status || 'Pending'}</div>
+                        <div><strong>Appointment Date:</strong> {new Date(consultation.appointment_date || consultation.createdAt).toLocaleString()}</div>
+                        <div className="col-span-2"><strong>Detailed Symptoms:</strong> {consultation.symptoms}</div>
+                        {consultation.diagnosis && <div className="col-span-2 text-[var(--green)]"><strong>Diagnosis:</strong> {consultation.diagnosis}</div>}
+                        {consultation.prescription && consultation.prescription.length > 0 && (
+                          <div className="col-span-2 text-[var(--green)]"><strong>Prescription:</strong> {consultation.prescription[0].medicine_name} ({consultation.prescription[0].dosage})</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {diagnosisDrafts[id] ? (
                     <form className="mt-3" onSubmit={async (e) => {
                       e.preventDefault();
-                      const key = consultation._id || consultation.id;
-                      const draft = diagnosisDrafts[key];
-                      setProcessingDiagnosis((p) => ({ ...p, [key]: true }));
+                      const draft = diagnosisDrafts[id];
+                      setProcessingDiagnosis((p) => ({ ...p, [id]: true }));
                       try {
-                        await requestJson(`/consultations/${consultation._id || consultation.id}/prescription`, {
+                        await requestJson(`/consultations/${id}/prescription`, {
                           method: 'POST',
                           body: JSON.stringify({
                             diagnosis: draft.diagnosis,
@@ -2216,39 +2209,39 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                           })
                         });
                         setFlash('Prescription saved');
-                        setDiagnosisDrafts((d) => { const copy = { ...d }; delete copy[key]; return copy; });
+                        setDiagnosisDrafts((d) => { const copy = { ...d }; delete copy[id]; return copy; });
                         await loadAppointments();
                       } catch (err) {
                         setFlash('Unable to save prescription: ' + err.message);
                       } finally {
-                        setProcessingDiagnosis((p) => ({ ...p, [key]: false }));
+                        setProcessingDiagnosis((p) => ({ ...p, [id]: false }));
                       }
                     }}>
-                      <label className="fg"><span className="fl">Diagnosis</span><input className="fi" value={diagnosisDrafts[consultation._id || consultation.id].diagnosis} onChange={(e)=> setDiagnosisDrafts((d)=>({ ...d, [consultation._id||consultation.id]: { ...d[consultation._id||consultation.id], diagnosis: e.target.value } }))} required /></label>
-                      <label className="fg"><span className="fl">Medicine</span><input className="fi" value={diagnosisDrafts[consultation._id || consultation.id].medicine_name} onChange={(e)=> setDiagnosisDrafts((d)=>({ ...d, [consultation._id||consultation.id]: { ...d[consultation._id||consultation.id], medicine_name: e.target.value } }))} required /></label>
-                      <label className="fg"><span className="fl">Dosage</span><input className="fi" value={diagnosisDrafts[consultation._id || consultation.id].dosage} onChange={(e)=> setDiagnosisDrafts((d)=>({ ...d, [consultation._id||consultation.id]: { ...d[consultation._id||consultation.id], dosage: e.target.value } }))} /></label>
-                      <label className="fg"><span className="fl">Frequency</span><input className="fi" value={diagnosisDrafts[consultation._id || consultation.id].frequency} onChange={(e)=> setDiagnosisDrafts((d)=>({ ...d, [consultation._id||consultation.id]: { ...d[consultation._id||consultation.id], frequency: e.target.value } }))} /></label>
-                      <label className="fg"><span className="fl">Duration (days)</span><input className="fi" type="number" value={diagnosisDrafts[consultation._id || consultation.id].duration_days} onChange={(e)=> setDiagnosisDrafts((d)=>({ ...d, [consultation._id||consultation.id]: { ...d[consultation._id||consultation.id], duration_days: e.target.value } }))} /></label>
+                      <label className="fg"><span className="fl">Diagnosis</span><input className="fi" value={diagnosisDrafts[id].diagnosis} onChange={(e)=> setDiagnosisDrafts((d)=>({ ...d, [id]: { ...d[id], diagnosis: e.target.value } }))} required /></label>
+                      <label className="fg"><span className="fl">Medicine</span><input className="fi" value={diagnosisDrafts[id].medicine_name} onChange={(e)=> setDiagnosisDrafts((d)=>({ ...d, [id]: { ...d[id], medicine_name: e.target.value } }))} required /></label>
+                      <label className="fg"><span className="fl">Dosage</span><input className="fi" value={diagnosisDrafts[id].dosage} onChange={(e)=> setDiagnosisDrafts((d)=>({ ...d, [id]: { ...d[id], dosage: e.target.value } }))} /></label>
+                      <label className="fg"><span className="fl">Frequency</span><input className="fi" value={diagnosisDrafts[id].frequency} onChange={(e)=> setDiagnosisDrafts((d)=>({ ...d, [id]: { ...d[id], frequency: e.target.value } }))} /></label>
+                      <label className="fg"><span className="fl">Duration (days)</span><input className="fi" type="number" value={diagnosisDrafts[id].duration_days} onChange={(e)=> setDiagnosisDrafts((d)=>({ ...d, [id]: { ...d[id], duration_days: e.target.value } }))} /></label>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button className="btn btn-primary" type="submit" disabled={processingDiagnosis[consultation._id || consultation.id]}>Save</button>
-                        <button className="btn btn-outline" type="button" onClick={() => setDiagnosisDrafts((d)=>{ const c={...d}; delete c[consultation._id||consultation.id]; return c; })}>Cancel</button>
+                        <button className="btn btn-primary" type="submit" disabled={processingDiagnosis[id]}>Save</button>
+                        <button className="btn btn-outline" type="button" onClick={() => setDiagnosisDrafts((d)=>{ const c={...d}; delete c[id]; return c; })}>Cancel</button>
                       </div>
                     </form>
                   ) : null}
                 </div>
               </div>
-            ))}
+            )}) : <div className="empty-state">No appointments found.</div>}
           </div>
         </SectionCard>
 
         <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
           <SectionCard title="My patients">
             <div className="grid gap-3 md:grid-cols-3">
-              {patients.map((patient) => (
-                <div key={patient.name} className="rounded-2xl border border-[var(--gray-200)] bg-white p-4 shadow-sm">
+              {animals.slice(0, 6).map((patient) => (
+                <div key={patient._id} className="rounded-2xl border border-[var(--gray-200)] bg-white p-4 shadow-sm">
                   <div className="font-semibold text-[var(--gray-800)]">{patient.name}</div>
-                  <div className="mt-1 text-sm text-[var(--gray-600)]">Last weight: {patient.weight}</div>
-                  <div className="mt-2"><StatusTag value={patient.status} /></div>
+                  <div className="mt-1 text-sm text-[var(--gray-600)]">Last weight: {patient.weight ? patient.weight + " kg" : "N/A"}</div>
+                  <div className="mt-2"><StatusTag value={patient.status || "Healthy"} /></div>
                 </div>
               ))}
             </div>

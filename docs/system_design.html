@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FarmTrack Pro — System Design Document</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  :root {
+    --primary: #2563eb;
+    --primary-light: #dbeafe;
+    --primary-dark: #1e40af;
+    --green: #059669;
+    --green-light: #d1fae5;
+    --red: #dc2626;
+    --red-light: #fee2e2;
+    --amber: #d97706;
+    --amber-light: #fef3c7;
+    --purple: #7c3aed;
+    --purple-light: #ede9fe;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-500: #6b7280;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--gray-800);
+    line-height: 1.6;
+    background: #fff;
+    font-size: 11pt;
+  }
+
+  @media print {
+    body { font-size: 10pt; }
+    .page-break { page-break-before: always; }
+    .no-break { page-break-inside: avoid; }
+    @page { margin: 15mm 18mm; size: A4; }
+  }
+
+  .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+
+  /* ─── Cover Page ─── */
+  .cover {
+    text-align: center;
+    padding: 100px 40px 60px;
+    min-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 50%, #eff6ff 100%);
+    border-radius: 12px;
+    margin-bottom: 30px;
+  }
+  .cover-icon { font-size: 72px; margin-bottom: 16px; }
+  .cover h1 {
+    font-size: 36pt;
+    font-weight: 900;
+    color: var(--gray-900);
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+  }
+  .cover .subtitle {
+    font-size: 14pt;
+    color: var(--primary);
+    font-weight: 600;
+    margin-bottom: 30px;
+  }
+  .cover .tagline {
+    font-size: 11pt;
+    color: var(--gray-500);
+    max-width: 500px;
+    margin-bottom: 50px;
+  }
+  .cover-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 10pt;
+    color: var(--gray-700);
+  }
+  .cover-meta strong { color: var(--gray-900); }
+
+  /* ─── Section Headers ─── */
+  .section-num {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 700;
+    font-size: 10pt;
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+    text-align: center;
+    border-radius: 50%;
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+  h2 {
+    font-size: 18pt;
+    font-weight: 800;
+    color: var(--gray-900);
+    margin: 36px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 3px solid var(--primary);
+    display: flex;
+    align-items: center;
+  }
+  h3 {
+    font-size: 13pt;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 22px 0 10px;
+  }
+  h4 {
+    font-size: 11pt;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin: 14px 0 6px;
+  }
+  p { margin-bottom: 10px; }
+
+  /* ─── Tables ─── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 18px;
+    font-size: 9.5pt;
+  }
+  th {
+    background: var(--gray-900);
+    color: #fff;
+    font-weight: 600;
+    text-align: left;
+    padding: 8px 10px;
+  }
+  td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  tr:nth-child(even) td { background: var(--gray-50); }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 8pt;
+    font-weight: 600;
+  }
+  .badge-blue { background: var(--primary-light); color: var(--primary-dark); }
+  .badge-green { background: var(--green-light); color: var(--green); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-amber { background: var(--amber-light); color: var(--amber); }
+  .badge-purple { background: var(--purple-light); color: var(--purple); }
+
+  /* ─── Architecture Boxes ─── */
+  .arch-diagram {
+    background: var(--gray-50);
+    border: 2px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 16px 0 20px;
+  }
+  .arch-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .arch-box {
+    background: #fff;
+    border: 2px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-align: center;
+    min-width: 120px;
+    flex: 1;
+    max-width: 200px;
+  }
+  .arch-box.primary { border-color: var(--primary); background: var(--primary-light); }
+  .arch-box.green { border-color: var(--green); background: var(--green-light); }
+  .arch-box.amber { border-color: var(--amber); background: var(--amber-light); }
+  .arch-box.purple { border-color: var(--purple); background: var(--purple-light); }
+  .arch-box .icon { font-size: 20pt; }
+  .arch-box .label { font-weight: 700; font-size: 9pt; color: var(--gray-800); margin-top: 4px; }
+  .arch-box .sublabel { font-size: 8pt; color: var(--gray-500); }
+  .arch-arrow {
+    text-align: center;
+    color: var(--gray-400);
+    font-size: 16pt;
+    margin: 4px 0;
+  }
+  .arch-layer-label {
+    text-align: center;
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--gray-500);
+    margin-bottom: 8px;
+  }
+
+  /* ─── Flow Steps ─── */
+  .flow-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 16px 0;
+  }
+  .flow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    position: relative;
+    padding-bottom: 16px;
+  }
+  .flow-step:last-child { padding-bottom: 0; }
+  .flow-step::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 32px;
+    bottom: 0;
+    width: 2px;
+    background: var(--gray-200);
+  }
+  .flow-step:last-child::before { display: none; }
+  .flow-num {
+    min-width: 32px;
+    height: 32px;
+    line-height: 32px;
+    text-align: center;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 9pt;
+    z-index: 1;
+  }
+  .flow-content { flex: 1; }
+  .flow-content strong { color: var(--gray-900); }
+  .flow-content p { margin: 2px 0 0; font-size: 9.5pt; color: var(--gray-500); }
+
+  /* ─── Module Grid ─── */
+  .module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+    margin: 14px 0 20px;
+  }
+  .module-card {
+    background: #fff;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+  .module-card .icon { font-size: 22pt; margin-bottom: 4px; }
+  .module-card .name { font-weight: 700; font-size: 9pt; color: var(--gray-800); }
+  .module-card .desc { font-size: 8pt; color: var(--gray-500); margin-top: 2px; }
+
+  /* ─── ER Diagram (CSS) ─── */
+  .er-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 14px 0 20px;
+  }
+  .er-entity {
+    background: #fff;
+    border: 2px solid var(--primary);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .er-entity-header {
+    background: var(--primary);
+    color: #fff;
+    font-weight: 700;
+    font-size: 9pt;
+    padding: 6px 10px;
+    text-align: center;
+  }
+  .er-entity-body {
+    padding: 6px 10px;
+    font-size: 8pt;
+    color: var(--gray-700);
+  }
+  .er-entity-body div {
+    padding: 2px 0;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .er-entity-body div:last-child { border: none; }
+  .er-pk { color: var(--primary); font-weight: 600; }
+  .er-fk { color: var(--amber); font-weight: 600; }
+
+  /* ─── Alert boxes ─── */
+  .alert-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin: 6px 0;
+    font-size: 9.5pt;
+  }
+  .alert-card.warning { background: var(--amber-light); border-left: 4px solid var(--amber); }
+  .alert-card.critical { background: var(--red-light); border-left: 4px solid var(--red); }
+  .alert-card.info { background: var(--primary-light); border-left: 4px solid var(--primary); }
+  .alert-icon { font-size: 16pt; }
+
+  /* ─── Security Grid ─── */
+  .security-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 14px 0;
+  }
+  .security-item {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .security-item .title { font-weight: 700; font-size: 9.5pt; color: var(--gray-900); }
+  .security-item .desc { font-size: 8.5pt; color: var(--gray-500); margin-top: 2px; }
+
+  /* ─── Footer ─── */
+  .doc-footer {
+    text-align: center;
+    padding: 30px 0;
+    margin-top: 40px;
+    border-top: 2px solid var(--gray-200);
+    font-size: 9pt;
+    color: var(--gray-500);
+  }
+
+  /* ─── Relationship lines (text-based) ─── */
+  .rel-list {
+    margin: 10px 0 16px 20px;
+    font-size: 9.5pt;
+    color: var(--gray-700);
+  }
+  .rel-list li { margin-bottom: 4px; }
+  .rel-arrow { color: var(--primary); font-weight: 700; }
+
+  /* ─── Two-col layout ─── */
+  .two-col { display: flex; gap: 20px; }
+  .two-col > div { flex: 1; }
+
+  /* ─── DFD actors ─── */
+  .dfd-container {
+    background: var(--gray-50);
+    border: 2px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 14px 0 20px;
+  }
+  .dfd-actors {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 16px;
+  }
+  .dfd-actor {
+    text-align: center;
+    font-size: 9pt;
+    font-weight: 600;
+  }
+  .dfd-actor .icon { font-size: 28pt; }
+  .dfd-processes {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .dfd-process {
+    background: var(--primary-light);
+    border: 1.5px solid var(--primary);
+    border-radius: 20px;
+    text-align: center;
+    padding: 8px 6px;
+    font-size: 8pt;
+    font-weight: 600;
+    color: var(--primary-dark);
+  }
+  .dfd-db {
+    text-align: center;
+    margin-top: 16px;
+    padding: 10px;
+    background: var(--amber-light);
+    border: 2px solid var(--amber);
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 10pt;
+    color: var(--amber);
+  }
+
+  ul { margin: 8px 0 12px 18px; }
+  li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ═══════════════ COVER PAGE ═══════════════ -->
+  <div class="cover">
+    <div class="cover-icon">🐄</div>
+    <h1>FarmTrack Pro</h1>
+    <div class="subtitle">System Design Document</div>
+    <div class="tagline">
+      A full-stack Smart Livestock & Farm Operations Management System for digitizing
+      livestock inventory, health tracking, vaccination, automated feeding, veterinary
+      consultations, and staff management.
+    </div>
+    <div class="cover-meta">
+      <div><strong>Technology:</strong> React · Node.js · Express · MongoDB</div>
+      <div><strong>Version:</strong> 1.0</div>
+      <div><strong>Date:</strong> May 2026</div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ TABLE OF CONTENTS ═══════════════ -->
+  <div class="page-break"></div>
+  <h2><span class="section-num">#</span> Table of Contents</h2>
+  <table>
+    <thead><tr><th>#</th><th>Section</th><th>Page</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>System Overview & Objectives</td><td>3</td></tr>
+      <tr><td>2</td><td>High-Level Architecture</td><td>3</td></tr>
+      <tr><td>3</td><td>Technology Stack</td><td>4</td></tr>
+      <tr><td>4</td><td>Module Architecture</td><td>4</td></tr>
+      <tr><td>5</td><td>Authentication & Authorization Flow</td><td>5</td></tr>
+      <tr><td>6</td><td>Database Schema (ER Diagram)</td><td>6</td></tr>
+      <tr><td>7</td><td>REST API Endpoints</td><td>7</td></tr>
+      <tr><td>8</td><td>Alert Engine Design</td><td>9</td></tr>
+      <tr><td>9</td><td>Data Flow Diagram (DFD Level 1)</td><td>9</td></tr>
+      <tr><td>10</td><td>Deployment Architecture</td><td>10</td></tr>
+      <tr><td>11</td><td>Frontend Component Hierarchy</td><td>10</td></tr>
+      <tr><td>12</td><td>Security Measures</td><td>11</td></tr>
+      <tr><td>13</td><td>Key Design Decisions</td><td>11</td></tr>
+      <tr><td>14</td><td>Future Enhancements</td><td>12</td></tr>
+    </tbody>
+  </table>
+
+
+  <!-- ═══════════════ 1. SYSTEM OVERVIEW ═══════════════ -->
+  <div class="page-break"></div>
+  <h2><span class="section-num">1</span> System Overview</h2>
+  <p>
+    <strong>FarmTrack Pro</strong> is a comprehensive farm management platform designed to digitize and
+    streamline all aspects of livestock operations. It provides real-time dashboards, automated alerts,
+    role-based access control, and a veterinary consultation module.
+  </p>
+  <h3>Key Objectives</h3>
+  <ul>
+    <li><strong>Digitize</strong> livestock records — registration, health, vaccination, feeding</li>
+    <li><strong>Automate</strong> alerts for low feed, offline feeders, overdue vaccinations, critical health</li>
+    <li><strong>Enable</strong> role-based workflows for Admins, Farmers, Staff, Doctors, and HoDs</li>
+    <li><strong>Provide</strong> analytics dashboards with species distribution, feed trends, and health metrics</li>
+    <li><strong>Support</strong> veterinary consultations with appointment scheduling and prescription management</li>
+  </ul>
+
+
+  <!-- ═══════════════ 2. HIGH-LEVEL ARCHITECTURE ═══════════════ -->
+  <h2><span class="section-num">2</span> High-Level Architecture</h2>
+  <div class="arch-diagram no-break">
+    <div class="arch-layer-label">Client Layer</div>
+    <div class="arch-row">
+      <div class="arch-box primary">
+        <div class="icon">🌐</div>
+        <div class="label">Web Browser</div>
+        <div class="sublabel">Chrome / Firefox / Edge</div>
+      </div>
+    </div>
+
+    <div class="arch-arrow">▼ HTTP / REST</div>
+
+    <div class="arch-layer-label">Frontend Layer (React + Vite)</div>
+    <div class="arch-row">
+      <div class="arch-box primary">
+        <div class="icon">⚛️</div>
+        <div class="label">React SPA</div>
+        <div class="sublabel">Single Page App</div>
+      </div>
+      <div class="arch-box primary">
+        <div class="icon">🧭</div>
+        <div class="label">React Router</div>
+        <div class="sublabel">Client Routing</div>
+      </div>
+      <div class="arch-box primary">
+        <div class="icon">🔐</div>
+        <div class="label">Auth Views</div>
+        <div class="sublabel">Login / Register</div>
+      </div>
+      <div class="arch-box primary">
+        <div class="icon">📊</div>
+        <div class="label">Dashboard</div>
+        <div class="sublabel">10+ Modules</div>
+      </div>
+    </div>
+
+    <div class="arch-arrow">▼ JWT Bearer Token</div>
+
+    <div class="arch-layer-label">Backend Layer (Node.js + Express)</div>
+    <div class="arch-row">
+      <div class="arch-box green">
+        <div class="icon">🖥️</div>
+        <div class="label">Express API</div>
+        <div class="sublabel">Port 5000</div>
+      </div>
+      <div class="arch-box green">
+        <div class="icon">🛡️</div>
+        <div class="label">JWT Middleware</div>
+        <div class="sublabel">Auth Guard</div>
+      </div>
+      <div class="arch-box green">
+        <div class="icon">📂</div>
+        <div class="label">Controllers</div>
+        <div class="sublabel">11 Modules</div>
+      </div>
+      <div class="arch-box green">
+        <div class="icon">🔔</div>
+        <div class="label">Alert Engine</div>
+        <div class="sublabel">Real-time</div>
+      </div>
+    </div>
+
+    <div class="arch-arrow">▼ Read / Write</div>
+
+    <div class="arch-layer-label">Data Layer</div>
+    <div class="arch-row">
+      <div class="arch-box amber">
+        <div class="icon">🍃</div>
+        <div class="label">MongoDB</div>
+        <div class="sublabel">Primary Database</div>
+      </div>
+      <div class="arch-box amber">
+        <div class="icon">📄</div>
+        <div class="label">JSON File Store</div>
+        <div class="sublabel">Fallback (db.json)</div>
+      </div>
+      <div class="arch-box amber">
+        <div class="icon">🖼️</div>
+        <div class="label">File Uploads</div>
+        <div class="sublabel">Multer (5MB)</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ 3. TECHNOLOGY STACK ═══════════════ -->
+  <div class="page-break"></div>
+  <h2><span class="section-num">3</span> Technology Stack</h2>
+  <table>
+    <thead><tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td>Frontend</td><td><strong>React 18</strong></td><td>Component-based UI framework</td></tr>
+      <tr><td>Build Tool</td><td><strong>Vite 5</strong></td><td>Fast HMR dev server & production bundler</td></tr>
+      <tr><td>Routing</td><td><strong>React Router DOM 6</strong></td><td>Client-side SPA navigation</td></tr>
+      <tr><td>Animations</td><td><strong>Framer Motion</strong></td><td>Page transitions & micro-animations</td></tr>
+      <tr><td>Charts</td><td><strong>Recharts</strong></td><td>Line charts, analytics visualizations</td></tr>
+      <tr><td>Icons</td><td><strong>Lucide React</strong></td><td>Modern SVG icon library</td></tr>
+      <tr><td>Backend</td><td><strong>Node.js + Express</strong></td><td>RESTful API server</td></tr>
+      <tr><td>Authentication</td><td><strong>JWT + bcrypt.js</strong></td><td>Token-based auth with password hashing</td></tr>
+      <tr><td>Database</td><td><strong>MongoDB + Mongoose</strong></td><td>Primary data persistence</td></tr>
+      <tr><td>File Store</td><td><strong>JSON flat-file</strong></td><td>Fallback / local development store</td></tr>
+      <tr><td>File Upload</td><td><strong>Multer</strong></td><td>Animal photo uploads (up to 5MB)</td></tr>
+      <tr><td>Deployment</td><td><strong>Docker / Heroku</strong></td><td>Multi-platform deployment</td></tr>
+    </tbody>
+  </table>
+
+
+  <!-- ═══════════════ 4. MODULE ARCHITECTURE ═══════════════ -->
+  <h2><span class="section-num">4</span> Module Architecture</h2>
+  <h3>Frontend Modules</h3>
+  <div class="module-grid no-break">
+    <div class="module-card"><div class="icon">📊</div><div class="name">Dashboard Overview</div><div class="desc">Stats, charts, alerts</div></div>
+    <div class="module-card"><div class="icon">🐄</div><div class="name">Livestock Inventory</div><div class="desc">Register, edit, photo</div></div>
+    <div class="module-card"><div class="icon">❤️</div><div class="name">Health & Medical</div><div class="desc">Conditions, treatments</div></div>
+    <div class="module-card"><div class="icon">💉</div><div class="name">Vaccination Tracking</div><div class="desc">Schedule, log, status</div></div>
+    <div class="module-card"><div class="icon">🍽️</div><div class="name">Feeder Management</div><div class="desc">Inventory, feed logs</div></div>
+    <div class="module-card"><div class="icon">📈</div><div class="name">Reports & Analytics</div><div class="desc">Trends, summaries</div></div>
+    <div class="module-card"><div class="icon">👨‍⚕️</div><div class="name">Doctor Dashboard</div><div class="desc">Appointments, Rx</div></div>
+    <div class="module-card"><div class="icon">👥</div><div class="name">User Management</div><div class="desc">CRUD, promote, roles</div></div>
+    <div class="module-card"><div class="icon">🔔</div><div class="name">Notifications</div><div class="desc">Toast alerts, history</div></div>
+    <div class="module-card"><div class="icon">⚙️</div><div class="name">Settings</div><div class="desc">Dark mode, system info</div></div>
+  </div>
+
+  <h3>Backend Controllers</h3>
+  <table>
+    <thead><tr><th>Controller</th><th>Route Prefix</th><th>Responsibility</th></tr></thead>
+    <tbody>
+      <tr><td>authController</td><td><code>/api/auth</code></td><td>Login, register (farmer & admin)</td></tr>
+      <tr><td>animalController</td><td><code>/api/animals</code></td><td>CRUD animals, photo upload</td></tr>
+      <tr><td>healthController</td><td><code>/api/health</code></td><td>Health record CRUD</td></tr>
+      <tr><td>vaccinationController</td><td><code>/api/vaccinations</code></td><td>Vaccination log CRUD</td></tr>
+      <tr><td>feedController</td><td><code>/api/feeds</code></td><td>Feed consumption logs</td></tr>
+      <tr><td>feederController</td><td><code>/api/feeders</code></td><td>Feeder inventory & status</td></tr>
+      <tr><td>consultationController</td><td><code>/api/consultations</code></td><td>Vet appointments & prescriptions</td></tr>
+      <tr><td>userController</td><td><code>/api/users</code></td><td>User CRUD, role promotion</td></tr>
+      <tr><td>staffController</td><td><code>/api/staff</code></td><td>Staff directory (synced with users)</td></tr>
+      <tr><td>alertController</td><td><code>/api/alerts</code></td><td>Auto-generated real-time alerts</td></tr>
+      <tr><td>notificationController</td><td><code>/api/notifications</code></td><td>System notification history</td></tr>
+    </tbody>
+  </table>
+
+
+  <!-- ═══════════════ 5. AUTHENTICATION FLOW ═══════════════ -->
+  <div class="page-break"></div>
+  <h2><span class="section-num">5</span> Authentication & Authorization Flow</h2>
+
+  <h3>Login Sequence</h3>
+  <div class="flow-steps no-break">
+    <div class="flow-step">
+      <div class="flow-num">1</div>
+      <div class="flow-content">
+        <strong>User enters credentials</strong>
+        <p>Farmer ID + Password on the login page (or Admin Name + Password on the admin login page)</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">2</div>
+      <div class="flow-content">
+        <strong>Frontend sends POST request</strong>
+        <p><code>POST /api/auth/login</code> or <code>POST /api/auth/admin/login</code> with JSON body</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">3</div>
+      <div class="flow-content">
+        <strong>Backend looks up user in database</strong>
+        <p>Searches by farmerId, name, or email in the users collection</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">4</div>
+      <div class="flow-content">
+        <strong>Password verification with bcrypt</strong>
+        <p><code>bcrypt.compare()</code> validates the plaintext password against the stored hash (10 salt rounds)</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">5</div>
+      <div class="flow-content">
+        <strong>JWT token generated & returned</strong>
+        <p><code>jwt.sign({ id: user._id }, JWT_SECRET)</code> — token returned with user object</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">6</div>
+      <div class="flow-content">
+        <strong>Frontend stores token in localStorage</strong>
+        <p>All subsequent API calls include <code>Authorization: Bearer &lt;token&gt;</code> header</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>User Roles & Permissions</h3>
+  <table>
+    <thead><tr><th>Role</th><th>Dashboard</th><th>Livestock</th><th>Health</th><th>Vaccination</th><th>Feeding</th><th>Doctor</th><th>Staff Mgmt</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="badge badge-red">Admin</span></td>
+        <td>✅</td><td>✅ CRUD</td><td>✅ CRUD</td><td>✅ CRUD</td><td>✅ CRUD</td><td>✅</td><td>✅ CRUD</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blue">Doctor</span></td>
+        <td>✅</td><td>✅ Read</td><td>✅ CRUD</td><td>✅ CRUD</td><td>✅ Read</td><td>✅</td><td>✅ Read</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-green">Staff</span></td>
+        <td>✅</td><td>✅ CRUD</td><td>✅ CRUD</td><td>✅ CRUD</td><td>✅ CRUD</td><td>—</td><td>✅ Read</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-amber">Farmer</span></td>
+        <td>✅</td><td>✅ CRUD</td><td>✅ CRUD</td><td>✅ CRUD</td><td>✅ CRUD</td><td>—</td><td>✅ Read</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Admin Registration Bootstrap</h3>
+  <ul>
+    <li><strong>First admin:</strong> Created via <code>POST /api/auth/admin/register</code> with system <code>ADMIN_PIN</code> (default: <code>admin123</code>)</li>
+    <li><strong>Subsequent admins:</strong> Requires a valid admin JWT token in the <code>Authorization</code> header</li>
+    <li><strong>Regular users:</strong> Created by admins through the Staff Management panel with custom names and roles</li>
+  </ul>
+
+
+  <!-- ═══════════════ 6. DATABASE SCHEMA ═══════════════ -->
+  <div class="page-break"></div>
+  <h2><span class="section-num">6</span> Database Schema (ER Diagram)</h2>
+
+  <div class="er-grid no-break">
+    <div class="er-entity">
+      <div class="er-entity-header">👤 USERS</div>
+      <div class="er-entity-body">
+        <div><span class="er-pk">🔑 _id</span> (PK)</div>
+        <div>name</div>
+        <div>email</div>
+        <div>farmerId (Unique)</div>
+        <div>password (bcrypt hash)</div>
+        <div>role (Admin/Staff/Doctor/Farmer)</div>
+        <div>status, phone, createdAt</div>
+      </div>
+    </div>
+    <div class="er-entity">
+      <div class="er-entity-header">🐄 ANIMALS</div>
+      <div class="er-entity-body">
+        <div><span class="er-pk">🔑 _id</span> (PK)</div>
+        <div>name, type, breed, gender</div>
+        <div>dob, weight, pen, tag</div>
+        <div>status, temperature</div>
+        <div>activityLevel, feedIntake</div>
+        <div>photoUrl, lastChecked</div>
+        <div>createdAt</div>
+      </div>
+    </div>
+    <div class="er-entity">
+      <div class="er-entity-header">👥 STAFF</div>
+      <div class="er-entity-body">
+        <div><span class="er-pk">🔑 _id</span> (PK, synced with USERS)</div>
+        <div>name, role</div>
+        <div>email, phone</div>
+        <div>status, joined</div>
+        <div>createdAt</div>
+      </div>
+    </div>
+    <div class="er-entity">
+      <div class="er-entity-header">💉 VACCINATIONS</div>
+      <div class="er-entity-body">
+        <div><span class="er-pk">🔑 _id</span> (PK)</div>
+        <div><span class="er-fk">🔗 animalId</span> (FK → ANIMALS)</div>
+        <div>vaccineType</div>
+        <div>dueDate, status</div>
+        <div>batchNumber, createdAt</div>
+      </div>
+    </div>
+    <div class="er-entity">
+      <div class="er-entity-header">❤️ HEALTH_RECORDS</div>
+      <div class="er-entity-body">
+        <div><span class="er-pk">🔑 _id</span> (PK)</div>
+        <div><span class="er-fk">🔗 animalId</span> (FK → ANIMALS)</div>
+        <div>condition, symptoms</div>
+        <div>treatment</div>
+        <div>date, createdAt</div>
+      </div>
+    </div>
+    <div class="er-entity">
+      <div class="er-entity-header">🍽️ FEEDERS</div>
+      <div class="er-entity-body">
+        <div><span class="er-pk">🔑 _id</span> (PK)</div>
+        <div>location, status</div>
+        <div>feedLevel, batteryLevel</div>
+        <div>networkStatus, schedule</div>
+        <div>feedQuantity, createdAt</div>
+      </div>
+    </div>
+    <div class="er-entity">
+      <div class="er-entity-header">📋 FEED_LOGS</div>
+      <div class="er-entity-body">
+        <div><span class="er-pk">🔑 _id</span> (PK)</div>
+        <div><span class="er-fk">🔗 animalId</span> (FK → ANIMALS)</div>
+        <div><span class="er-fk">🔗 feederId</span> (FK → FEEDERS)</div>
+        <div>quantity, date</div>
+        <div>createdAt</div>
+      </div>
+    </div>
+    <div class="er-entity">
+      <div class="er-entity-header">👨‍⚕️ CONSULTATIONS</div>
+      <div class="er-entity-body">
+        <div><span class="er-pk">🔑 _id</span> (PK)</div>
+        <div><span class="er-fk">🔗 animalId</span> (FK → ANIMALS)</div>
+        <div>appointment_date</div>
+        <div>symptoms, status</div>
+        <div>prescription, createdAt</div>
+      </div>
+    </div>
+    <div class="er-entity">
+      <div class="er-entity-header">🔔 NOTIFICATIONS</div>
+      <div class="er-entity-body">
+        <div><span class="er-pk">🔑 _id</span> (PK)</div>
+        <div>message</div>
+        <div>severity</div>
+        <div>type</div>
+        <div>createdAt</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Entity Relationships</h3>
+  <ul class="rel-list">
+    <li><strong>USERS</strong> <span class="rel-arrow">1 ── 1</span> <strong>STAFF</strong> (auto-synced on create/update/delete)</li>
+    <li><strong>ANIMALS</strong> <span class="rel-arrow">1 ── *</span> <strong>VACCINATIONS</strong> (one animal receives many vaccinations)</li>
+    <li><strong>ANIMALS</strong> <span class="rel-arrow">1 ── *</span> <strong>HEALTH_RECORDS</strong> (one animal has many health records)</li>
+    <li><strong>ANIMALS</strong> <span class="rel-arrow">1 ── *</span> <strong>FEED_LOGS</strong> (one animal has many feed entries)</li>
+    <li><strong>ANIMALS</strong> <span class="rel-arrow">1 ── *</span> <strong>CONSULTATIONS</strong> (one animal has many vet appointments)</li>
+    <li><strong>FEEDERS</strong> <span class="rel-arrow">1 ── *</span> <strong>FEED_LOGS</strong> (one feeder dispenses many feed logs)</li>
+  </ul>
+
+
+  <!-- ═══════════════ 7. REST API ═══════════════ -->
+  <div class="page-break"></div>
+  <h2><span class="section-num">7</span> REST API Endpoints</h2>
+
+  <h3>Authentication</h3>
+  <table>
+    <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Auth</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/auth/register</code></td><td>Farmer self-registration</td><td>❌</td></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/auth/login</code></td><td>Farmer login</td><td>❌</td></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/auth/admin/login</code></td><td>Admin login</td><td>❌</td></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/auth/admin/register</code></td><td>Admin registration (PIN or JWT)</td><td>🔐</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Livestock Management</h3>
+  <table>
+    <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Auth</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/animals</code></td><td>List all animals</td><td>❌</td></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/animals</code></td><td>Register new animal</td><td>🔐</td></tr>
+      <tr><td><span class="badge badge-amber">PATCH</span></td><td><code>/api/animals/:id</code></td><td>Update animal fields</td><td>🔐</td></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/animals/:id/photo</code></td><td>Upload animal photo</td><td>🔐</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Health & Vaccination</h3>
+  <table>
+    <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Auth</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/health</code></td><td>List health records</td><td>❌</td></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/health</code></td><td>Create health record</td><td>❌</td></tr>
+      <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/vaccinations</code></td><td>List vaccinations</td><td>❌</td></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/vaccinations</code></td><td>Log vaccination</td><td>❌</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Feeding System</h3>
+  <table>
+    <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Auth</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/feeders</code></td><td>List all feeders</td><td>❌</td></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/feeders</code></td><td>Add new feeder</td><td>❌</td></tr>
+      <tr><td><span class="badge badge-amber">PATCH</span></td><td><code>/api/feeders/:id</code></td><td>Update feeder status</td><td>❌</td></tr>
+      <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/feeds</code></td><td>List feed logs</td><td>❌</td></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/feeds</code></td><td>Log feed consumption</td><td>❌</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Doctor Consultations</h3>
+  <table>
+    <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Auth</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/consultations</code></td><td>List appointments</td><td>❌</td></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/consultations</code></td><td>Request appointment</td><td>❌</td></tr>
+      <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/consultations/:id</code></td><td>Get consultation details</td><td>❌</td></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/consultations/:id/prescription</code></td><td>Add prescription</td><td>🔐</td></tr>
+    </tbody>
+  </table>
+
+  <h3>User Management</h3>
+  <table>
+    <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Auth</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/users</code></td><td>List all users</td><td>🔐</td></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/users</code></td><td>Create user (admin)</td><td>🔐</td></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/users/:id/role</code></td><td>Promote user role</td><td>🔐</td></tr>
+      <tr><td><span class="badge badge-red">DELETE</span></td><td><code>/api/users/:id</code></td><td>Remove user</td><td>🔐</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Alerts & Notifications</h3>
+  <table>
+    <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Auth</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/alerts</code></td><td>Auto-generated real-time alerts</td><td>❌</td></tr>
+      <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/notifications</code></td><td>List notifications</td><td>❌</td></tr>
+      <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/notifications</code></td><td>Create notification</td><td>❌</td></tr>
+    </tbody>
+  </table>
+
+
+  <!-- ═══════════════ 8. ALERT ENGINE ═══════════════ -->
+  <div class="page-break"></div>
+  <h2><span class="section-num">8</span> Alert Engine Design</h2>
+  <p>
+    The alert engine automatically generates real-time alerts by analyzing live data from feeders,
+    feed logs, vaccinations, and health records. Alerts are computed on-the-fly (not stored),
+    ensuring they are always current.
+  </p>
+
+  <div class="no-break">
+    <div class="alert-card warning">
+      <span class="alert-icon">⚠️</span>
+      <div><strong>Low Feed Level</strong> — Triggered when feeder feed level drops below 30%</div>
+    </div>
+    <div class="alert-card critical">
+      <span class="alert-icon">🔴</span>
+      <div><strong>Feeder Offline</strong> — Triggered when feeder status = "Offline"</div>
+    </div>
+    <div class="alert-card info">
+      <span class="alert-icon">ℹ️</span>
+      <div><strong>High Feed Usage</strong> — Triggered when feed log quantity exceeds 35 units</div>
+    </div>
+    <div class="alert-card critical">
+      <span class="alert-icon">🔴</span>
+      <div><strong>Overdue Vaccination</strong> — Triggered when due date has passed and status is "pending"</div>
+    </div>
+    <div class="alert-card critical">
+      <span class="alert-icon">🔴</span>
+      <div><strong>Critical Health</strong> — Triggered when health condition = "critical"</div>
+    </div>
+  </div>
+
+  <h3>Alert Flow</h3>
+  <div class="arch-diagram no-break">
+    <div class="arch-row">
+      <div class="arch-box amber"><div class="icon">🍽️</div><div class="label">Feeders</div></div>
+      <div class="arch-box amber"><div class="icon">📋</div><div class="label">Feed Logs</div></div>
+      <div class="arch-box amber"><div class="icon">💉</div><div class="label">Vaccinations</div></div>
+      <div class="arch-box amber"><div class="icon">❤️</div><div class="label">Health Records</div></div>
+    </div>
+    <div class="arch-arrow">▼ Data queried on every GET /api/alerts</div>
+    <div class="arch-row">
+      <div class="arch-box purple"><div class="icon">⚙️</div><div class="label">Rules Engine</div><div class="sublabel">5 alert rules evaluated</div></div>
+    </div>
+    <div class="arch-arrow">▼ Generated alerts returned</div>
+    <div class="arch-row">
+      <div class="arch-box primary"><div class="icon">🔔</div><div class="label">Dashboard Alerts</div><div class="sublabel">Toast notifications + alert panel</div></div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ 9. DFD LEVEL 1 ═══════════════ -->
+  <h2><span class="section-num">9</span> Data Flow Diagram (DFD Level 1)</h2>
+  <div class="dfd-container no-break">
+    <div class="dfd-actors">
+      <div class="dfd-actor"><div class="icon">👨‍🌾</div>Farmer / Staff</div>
+      <div class="dfd-actor"><div class="icon">👨‍💼</div>Admin</div>
+      <div class="dfd-actor"><div class="icon">👨‍⚕️</div>Veterinary Doctor</div>
+    </div>
+    <div class="dfd-processes">
+      <div class="dfd-process">1.0<br/>Authentication</div>
+      <div class="dfd-process">2.0<br/>Livestock Mgmt</div>
+      <div class="dfd-process">3.0<br/>Health & Vacc</div>
+      <div class="dfd-process">4.0<br/>Feed Mgmt</div>
+      <div class="dfd-process">5.0<br/>Alert Generation</div>
+      <div class="dfd-process">6.0<br/>Reports</div>
+      <div class="dfd-process">7.0<br/>Consultations</div>
+      <div class="dfd-process">8.0<br/>User Mgmt</div>
+    </div>
+    <div class="dfd-db">📀 Database (MongoDB / JSON File Store)</div>
+  </div>
+  <p><strong>Data flows:</strong> All 3 actors authenticate via Process 1.0. Farmers manage livestock (2.0), log health/vaccinations (3.0), record feeding (4.0), and request appointments (7.0). Doctors add prescriptions (7.0) and health records (3.0). Admins manage users (8.0) and view reports (6.0). Alert Engine (5.0) reads from the database and pushes alerts to all users.</p>
+
+
+  <!-- ═══════════════ 10. DEPLOYMENT ═══════════════ -->
+  <div class="page-break"></div>
+  <h2><span class="section-num">10</span> Deployment Architecture</h2>
+  <div class="arch-diagram no-break">
+    <div class="arch-layer-label">Development Environment</div>
+    <div class="arch-row">
+      <div class="arch-box primary"><div class="icon">💻</div><div class="label">Developer Machine</div></div>
+      <div class="arch-box primary"><div class="icon">⚡</div><div class="label">Vite Dev :5173</div><div class="sublabel">HMR + Proxy</div></div>
+      <div class="arch-box green"><div class="icon">🖥️</div><div class="label">Express :5000</div><div class="sublabel">API Server</div></div>
+      <div class="arch-box amber"><div class="icon">🍃</div><div class="label">MongoDB :27017</div><div class="sublabel">Local DB</div></div>
+    </div>
+    <div class="arch-arrow">▼ git push to GitHub</div>
+    <div class="arch-layer-label">CI/CD Pipeline</div>
+    <div class="arch-row">
+      <div class="arch-box purple"><div class="icon">🐙</div><div class="label">GitHub Actions</div><div class="sublabel">Build + Deploy</div></div>
+    </div>
+    <div class="arch-arrow">▼ Deploy to Production</div>
+    <div class="arch-layer-label">Production</div>
+    <div class="arch-row">
+      <div class="arch-box green"><div class="icon">🐳</div><div class="label">Docker</div><div class="sublabel">Container</div></div>
+      <div class="arch-box green"><div class="icon">🟣</div><div class="label">Heroku</div><div class="sublabel">PaaS</div></div>
+      <div class="arch-box green"><div class="icon">▲</div><div class="label">Vercel</div><div class="sublabel">Frontend</div></div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Platform</th><th>Method</th><th>Config File</th></tr></thead>
+    <tbody>
+      <tr><td>Local</td><td><code>npm run dev</code></td><td>package.json</td></tr>
+      <tr><td>Docker</td><td><code>docker compose up</code></td><td>Dockerfile, docker-compose.yml</td></tr>
+      <tr><td>Heroku</td><td><code>git push heroku main</code></td><td>Procfile</td></tr>
+      <tr><td>Vercel</td><td>Auto-deploy from GitHub</td><td>vercel.json</td></tr>
+      <tr><td>GitHub Actions</td><td>CI/CD pipeline</td><td>.github/workflows/</td></tr>
+    </tbody>
+  </table>
+
+
+  <!-- ═══════════════ 11. COMPONENT HIERARCHY ═══════════════ -->
+  <h2><span class="section-num">11</span> Frontend Component Hierarchy</h2>
+  <div class="arch-diagram no-break">
+    <div class="arch-row">
+      <div class="arch-box primary"><div class="icon">⚛️</div><div class="label">App.jsx</div><div class="sublabel">Root Component</div></div>
+    </div>
+    <div class="arch-arrow">▼ Routes</div>
+    <div class="arch-row">
+      <div class="arch-box green"><div class="icon">🔐</div><div class="label">AuthView.jsx</div><div class="sublabel">Farmer Login</div></div>
+      <div class="arch-box green"><div class="icon">👑</div><div class="label">AdminAuth.jsx</div><div class="sublabel">Admin Login</div></div>
+      <div class="arch-box green"><div class="icon">📊</div><div class="label">DashboardView.jsx</div><div class="sublabel">Main Dashboard</div></div>
+    </div>
+    <div class="arch-arrow">▼ Dashboard Tabs</div>
+    <div class="arch-row" style="flex-wrap: wrap; gap: 8px;">
+      <div class="arch-box" style="min-width:100px; flex:1;"><div class="label">📊 Overview</div></div>
+      <div class="arch-box" style="min-width:100px; flex:1;"><div class="label">🐄 Livestock</div></div>
+      <div class="arch-box" style="min-width:100px; flex:1;"><div class="label">❤️ Health</div></div>
+      <div class="arch-box" style="min-width:100px; flex:1;"><div class="label">🍽️ Feeding</div></div>
+      <div class="arch-box" style="min-width:100px; flex:1;"><div class="label">📈 Reports</div></div>
+      <div class="arch-box" style="min-width:100px; flex:1;"><div class="label">👨‍⚕️ Doctor</div></div>
+      <div class="arch-box" style="min-width:100px; flex:1;"><div class="label">👥 Staff</div></div>
+      <div class="arch-box" style="min-width:100px; flex:1;"><div class="label">⚙️ Settings</div></div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ 12. SECURITY ═══════════════ -->
+  <div class="page-break"></div>
+  <h2><span class="section-num">12</span> Security Measures</h2>
+  <div class="security-grid no-break">
+    <div class="security-item">
+      <div class="title">🔒 Password Hashing</div>
+      <div class="desc">bcrypt with 10 salt rounds — plaintext passwords are never stored</div>
+    </div>
+    <div class="security-item">
+      <div class="title">🎫 Token Authentication</div>
+      <div class="desc">JWT (JSON Web Tokens) for stateless session management</div>
+    </div>
+    <div class="security-item">
+      <div class="title">🌐 CORS Protection</div>
+      <div class="desc">Custom middleware restricts allowed HTTP methods and headers</div>
+    </div>
+    <div class="security-item">
+      <div class="title">✅ Input Validation</div>
+      <div class="desc">Server-side field validation on all endpoints before database writes</div>
+    </div>
+    <div class="security-item">
+      <div class="title">🖼️ Upload Security</div>
+      <div class="desc">Multer with 5MB limit and image MIME-type filtering</div>
+    </div>
+    <div class="security-item">
+      <div class="title">📌 Admin Bootstrap PIN</div>
+      <div class="desc">Required for first admin registration; subsequent admins need JWT</div>
+    </div>
+    <div class="security-item">
+      <div class="title">🚫 Self-Delete Protection</div>
+      <div class="desc">Admins cannot remove their own account to prevent lockout</div>
+    </div>
+    <div class="security-item">
+      <div class="title">🛡️ Error Handling</div>
+      <div class="desc">Malformed JSON body diagnostics with safe error messages</div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ 13. DESIGN DECISIONS ═══════════════ -->
+  <h2><span class="section-num">13</span> Key Design Decisions</h2>
+  <table>
+    <thead><tr><th>Decision</th><th>Rationale</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Dual data store</strong> (MongoDB + JSON file)</td>
+        <td>Allows deployment without MongoDB; JSON store serves as fallback for lightweight local use</td>
+      </tr>
+      <tr>
+        <td><strong>User-Staff synchronization</strong></td>
+        <td>Every user account automatically creates a matching staff directory entry for consistent display</td>
+      </tr>
+      <tr>
+        <td><strong>SPA architecture</strong></td>
+        <td>Single-page app with client-side routing provides instant navigation and smooth UX</td>
+      </tr>
+      <tr>
+        <td><strong>Real-time alert engine</strong></td>
+        <td>Alerts computed on-the-fly from live data rather than stored, ensuring they are always current</td>
+      </tr>
+      <tr>
+        <td><strong>Role-based but permissive access</strong></td>
+        <td>All authenticated users can perform most operations; admin-only actions require JWT validation</td>
+      </tr>
+      <tr>
+        <td><strong>Glassmorphic login UI</strong></td>
+        <td>Animated water-drop background creates a premium, memorable first impression</td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <!-- ═══════════════ 14. FUTURE ENHANCEMENTS ═══════════════ -->
+  <h2><span class="section-num">14</span> Future Enhancements</h2>
+  <table>
+    <thead><tr><th>Enhancement</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>📱 Mobile App</td><td>React Native or PWA for field use by farmers</td></tr>
+      <tr><td>📡 IoT Integration</td><td>Connect real automated feeder hardware via MQTT protocol</td></tr>
+      <tr><td>🧠 ML Health Prediction</td><td>Predict animal illness from temperature, weight, and feed trends</td></tr>
+      <tr><td>🗺️ GPS Tracking</td><td>Geofencing and location tracking for pasture-based livestock</td></tr>
+      <tr><td>💬 Chat System</td><td>Real-time messaging between farmers and veterinary doctors</td></tr>
+      <tr><td>📧 Email/SMS Alerts</td><td>Push critical notifications via Twilio or SendGrid</td></tr>
+      <tr><td>📊 Advanced Analytics</td><td>Breed-wise performance, milk yield prediction, cost optimization</td></tr>
+    </tbody>
+  </table>
+
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <div class="doc-footer">
+    <strong>FarmTrack Pro</strong> — System Design Document<br/>
+    Smart Livestock & Farm Operations Management System<br/>
+    <em>Prepared for Mini Project Presentation • May 2026</em>
+  </div>
+
+</div>
+
+</body>
+</html>
