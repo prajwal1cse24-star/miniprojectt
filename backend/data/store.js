@@ -107,6 +107,20 @@ export const addUser = async (user) => {
     _id: makeId(),
   };
   db.users.push(record);
+
+  // Sync to db.staff
+  const staffRecord = {
+    _id: record._id,
+    name: record.name,
+    role: record.role,
+    email: record.email || `${record.farmerId}@farm.local`,
+    phone: record.phone || "",
+    status: record.status || "Active",
+    joined: new Date().toISOString().slice(0, 10),
+    createdAt: new Date().toISOString(),
+  };
+  db.staff.push(staffRecord);
+
   await writeDb(db);
   return record;
 };
@@ -150,6 +164,24 @@ export const ensureUserFarmerIds = async () => {
 
   db.users = updatedUsers;
 
+  // Sync missing users to db.staff
+  for (const user of db.users) {
+    const exists = db.staff.some((s) => String(s._id) === String(user._id));
+    if (!exists) {
+      db.staff.push({
+        _id: user._id,
+        name: user.name,
+        role: user.role || "Staff",
+        email: user.email || `${user.farmerId}@farm.local`,
+        phone: user.phone || "",
+        status: user.status || "Active",
+        joined: user.joined || new Date(user.createdAt || Date.now()).toISOString().slice(0, 10),
+        createdAt: user.createdAt || new Date().toISOString(),
+      });
+      changed = true;
+    }
+  }
+
   if (changed) {
     await writeDb(db);
   }
@@ -165,6 +197,13 @@ export const updateUserRole = async (id, role) => {
   const index = db.users.findIndex((u) => String(u._id) === String(id));
   if (index === -1) return null;
   db.users[index] = { ...db.users[index], role };
+
+  // Sync role update to db.staff
+  const staffIndex = db.staff.findIndex((s) => String(s._id) === String(id));
+  if (staffIndex !== -1) {
+    db.staff[staffIndex] = { ...db.staff[staffIndex], role };
+  }
+
   await writeDb(db);
   return db.users[index];
 };
@@ -174,6 +213,20 @@ export const updateUserById = async (id, changes) => {
   const index = db.users.findIndex((u) => String(u._id) === String(id));
   if (index === -1) return null;
   db.users[index] = { ...db.users[index], ...changes };
+
+  // Sync update to db.staff
+  const staffIndex = db.staff.findIndex((s) => String(s._id) === String(id));
+  if (staffIndex !== -1) {
+    db.staff[staffIndex] = {
+      ...db.staff[staffIndex],
+      ...(changes.name ? { name: changes.name } : {}),
+      ...(changes.role ? { role: changes.role } : {}),
+      ...(changes.email ? { email: changes.email } : {}),
+      ...(changes.phone ? { phone: changes.phone } : {}),
+      ...(changes.status ? { status: changes.status } : {}),
+    };
+  }
+
   await writeDb(db);
   return db.users[index];
 };
@@ -212,6 +265,20 @@ export const createUserByAdmin = async (user) => {
   };
 
   db.users.push(record);
+
+  // Sync to db.staff
+  const staffRecord = {
+    _id: record._id,
+    name: record.name,
+    role: record.role,
+    email: record.email,
+    phone: record.phone || "",
+    status: record.status || "Active",
+    joined: new Date().toISOString().slice(0, 10),
+    createdAt: record.createdAt,
+  };
+  db.staff.push(staffRecord);
+
   await writeDb(db);
   return record;
 };
@@ -221,6 +288,13 @@ export const deleteUserById = async (id) => {
   const index = db.users.findIndex((u) => String(u._id) === String(id));
   if (index === -1) return null;
   const [removed] = db.users.splice(index, 1);
+
+  // Sync delete from db.staff
+  const staffIndex = db.staff.findIndex((s) => String(s._id) === String(id));
+  if (staffIndex !== -1) {
+    db.staff.splice(staffIndex, 1);
+  }
+
   await writeDb(db);
   return removed;
 };

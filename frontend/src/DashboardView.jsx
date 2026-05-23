@@ -894,6 +894,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
       });
       setFlash("User saved successfully.");
       await loadUsers();
+      if (loadData) await loadData();
     } catch (error) {
       setFlash(`Unable to save user: ${error.message}`);
     }
@@ -1983,6 +1984,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                             await requestJson(`/users/${u._id}/role`, { method: 'POST', body: JSON.stringify({ role: 'Admin' }) });
                             setFlash(`Promoted ${u.farmerId || u.name} to Admin.`);
                             await loadUsers();
+                            if (loadData) await loadData();
                           } catch (err) {
                             setFlash('Promotion failed: ' + err.message);
                           }
@@ -1998,6 +2000,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                             await requestJson(`/users/${u._id}`, { method: 'DELETE' });
                             setFlash(`Removed ${u.farmerId || u.name}.`);
                             await loadUsers();
+                            if (loadData) await loadData();
                           } catch (err) {
                             setFlash('Remove failed: ' + err.message);
                           }

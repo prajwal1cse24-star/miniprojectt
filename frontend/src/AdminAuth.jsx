@@ -30,9 +30,13 @@ const AdminAuth = ({ onAuthSuccess }) => {
     setMessage('');
     try {
       if (isRegister) {
+        const tokenLocal = localStorage.getItem("authToken");
         const res = await fetch(`${API_BASE}/api/auth/admin/register`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(tokenLocal ? { Authorization: `Bearer ${tokenLocal}` } : {}),
+          },
           body: JSON.stringify({
             name: registerForm.name.trim(),
             password: registerForm.password,
