@@ -12,6 +12,21 @@ const AuthView = ({ onAuthSuccess }) => {
   const [registerMessage, setRegisterMessage] = useState('');
   const [registering, setRegistering] = useState(false);
 
+  const images = [
+    '/media/floating_cow_water.png',
+    '/media/floating_goat_water.png',
+    '/media/floating_buffalo_water.png',
+    '/media/floating_sheep_water.png'
+  ];
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveImageIdx((prev) => (prev + 1) % images.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
   const handleAuthChange = (event) => {
     const { name, value } = event.target;
     setAuthForm((current) => ({ ...current, [name]: value }));
@@ -90,7 +105,14 @@ const AuthView = ({ onAuthSuccess }) => {
         <div className="water-drop water-drop-1"></div>
         <div className="water-drop water-drop-2"></div>
         <div className="water-drop water-drop-3"></div>
-        <img src="/media/floating_cow_water.png" alt="Floating Water Cow" className="floating-water-img" />
+        {images.map((src, idx) => (
+          <img
+            key={src}
+            src={src}
+            alt="Floating Water Animal"
+            className={`floating-water-img ${activeImageIdx === idx ? 'active' : ''}`}
+          />
+        ))}
       </div>
 
       <section className='auth-hero'>
