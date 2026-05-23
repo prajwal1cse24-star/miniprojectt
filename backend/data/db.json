@@ -677,6 +677,45 @@
       "temperature": 37.5,
       "_id": "mphfwpyk-ybqvs5e4",
       "createdAt": "2026-05-22T21:36:54.380Z"
+    },
+    {
+      "name": "TestGoat-1779503785856",
+      "type": "Goat",
+      "breed": "Jamunapari",
+      "gender": "Female",
+      "weight": 45,
+      "pen": "Pen G",
+      "tag": "GT-5856",
+      "status": "Healthy",
+      "temperature": 38.9,
+      "_id": "mphqlwub-2tok8cb1",
+      "createdAt": "2026-05-23T02:36:25.859Z"
+    },
+    {
+      "name": "TestSheep-1779503785862",
+      "type": "Sheep",
+      "breed": "Merino",
+      "gender": "Male",
+      "weight": 60,
+      "pen": "Pen S",
+      "tag": "SH-5862",
+      "status": "Healthy",
+      "temperature": 39.1,
+      "_id": "mphqlwug-pa381dl8",
+      "createdAt": "2026-05-23T02:36:25.864Z"
+    },
+    {
+      "name": "TestCamel-1779503785866",
+      "type": "Camel",
+      "breed": "Dromedary",
+      "gender": "Male",
+      "weight": 500,
+      "pen": "Pen C",
+      "tag": "CM-5866",
+      "status": "Healthy",
+      "temperature": 37.5,
+      "_id": "mphqlwul-ud46iygt",
+      "createdAt": "2026-05-23T02:36:25.869Z"
     }
   ],
   "feeders": [],
