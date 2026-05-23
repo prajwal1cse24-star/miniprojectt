@@ -12,20 +12,14 @@ const AuthView = ({ onAuthSuccess }) => {
   const [registerMessage, setRegisterMessage] = useState('');
   const [registering, setRegistering] = useState(false);
 
-  const images = [
-    '/media/floating_cow_water.png',
-    '/media/floating_goat_water.png',
-    '/media/floating_buffalo_water.png',
-    '/media/floating_sheep_water.png'
-  ];
-  const [activeImageIdx, setActiveImageIdx] = useState(0);
-
-  React.useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveImageIdx((prev) => (prev + 1) % images.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
+  const rainDrops = React.useMemo(() => Array.from({ length: 18 }, (_, i) => ({
+    id: i,
+    left: `${2 + Math.random() * 96}%`,
+    delay: `${Math.random() * 8}s`,
+    duration: `${6 + Math.random() * 8}s`,
+    scale: 0.35 + Math.random() * 0.75,
+    opacity: 0.25 + Math.random() * 0.55
+  })), []);
 
   const handleAuthChange = (event) => {
     const { name, value } = event.target;
@@ -101,16 +95,21 @@ const AuthView = ({ onAuthSuccess }) => {
 
   return (
     <main className='auth-page'>
-      <div className="floating-water-container">
+      <div className="water-rain-container">
         <div className="water-drop water-drop-1"></div>
         <div className="water-drop water-drop-2"></div>
         <div className="water-drop water-drop-3"></div>
-        {images.map((src, idx) => (
-          <img
-            key={src}
-            src={src}
-            alt="Floating Water Animal"
-            className={`floating-water-img ${activeImageIdx === idx ? 'active' : ''}`}
+        {rainDrops.map((drop) => (
+          <div
+            key={drop.id}
+            className="water-drip"
+            style={{
+              left: drop.left,
+              animationDelay: drop.delay,
+              animationDuration: drop.duration,
+              transform: `scale(${drop.scale})`,
+              opacity: drop.opacity,
+            }}
           />
         ))}
       </div>

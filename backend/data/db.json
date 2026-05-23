@@ -475,6 +475,14 @@
       "role": "Farmer",
       "email": "",
       "_id": "mphfrt9a-6330ff50"
+    },
+    {
+      "name": "insu",
+      "farmerId": "121",
+      "password": "$2a$10$u1bOeRXE9ec2J8LmiGrLCuNwz80k0g/64rLX53QC2hN76tfZatDFK",
+      "role": "Farmer",
+      "email": "",
+      "_id": "mphouyig-mbyp0ypd"
     }
   ],
   "animals": [
