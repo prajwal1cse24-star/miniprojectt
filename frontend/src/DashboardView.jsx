@@ -1265,48 +1265,6 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                 Vaccinate Selected
               </button>
 
-              <button className="btn btn-outline" type="button" onClick={async () => {
-                if (!selectedIds.size) { setFlash('No animals selected'); return; }
-                const pasture = window.prompt('Move selected animals to pasture (name)', 'Pasture A');
-                if (!pasture) return;
-                try {
-                  for (const id of Array.from(selectedIds)) {
-                    await requestJson(`/animals/${id}`, { method: 'PATCH', body: JSON.stringify({ pen: pasture }) });
-                  }
-                  setFlash('Selected animals moved to ' + pasture);
-                  await loadData?.();
-                } catch (err) { setFlash('Move failed: ' + err.message); }
-              }}>Move to Pasture</button>
-
-              <button className="btn btn-outline" type="button" onClick={() => {
-                if (!selectedIds.size) { setFlash('No animals selected'); return; }
-                const rows = [["Photo","Name/ID","Breed","Age","Weight","Health","Last Milk","Last Fed","Next Vaccine","Pen","Tag"]];
-                for (const id of Array.from(selectedIds)) {
-                  const a = animalsById.get(String(id));
-                  rows.push([
-                    a?.photoUrl || a?.imageUrl || '',
-                    a?.name || '',
-                    a?.breed || '',
-                    a?.dob ? Math.floor((Date.now() - new Date(a.dob).getTime())/(1000*60*60*24*30)) + ' months' : '',
-                    a?.weight || '',
-                    a?.status || '',
-                    a?.lastMilk || '',
-                    a?.lastFed || '',
-                    (() => { const next = vaccinations.find(v => String(v.animalId) === String(id) && v.dueDate); return next ? `${next.vaccineType || next.vaccine} - ${next.dueDate}` : ''; })(),
-                    a?.pen || '',
-                    a?.tag || ''
-                  ]);
-                }
-                const csvContent = "data:text/csv;charset=utf-8," 
-                  + rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(",")).join("\n");
-                const encodedUri = encodeURI(csvContent);
-                const link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", `Selected_Animals_${Date.now()}.csv`);
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-              }}>Export CSV</button>
 
               <button className="btn btn-outline" type="button" onClick={() => {
                 if (!selectedIds.size) { setFlash('No animals selected'); return; }
