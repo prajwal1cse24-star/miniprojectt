@@ -5,7 +5,8 @@
       "email": "prajwalangadi97@gmail.com",
       "password": "$2a$10$zDIw8ZJMye3zEJzAIYlZZuEvRYkrsZFFS2WklA/7KCvw9ugcGL9Gm",
       "_id": "mou46qbl-yup0i5en",
-      "farmerId": "prajwalangadi97"
+      "farmerId": "prajwalangadi97",
+      "role": "Admin"
     },
     {
       "name": "Test Farm",
