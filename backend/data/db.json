@@ -490,7 +490,9 @@
       "name": "dft",
       "type": "Buffalo",
       "age": 4,
-      "_id": "mov7zhuz-t2b4btjf"
+      "_id": "mov7zhuz-t2b4btjf",
+      "pen": "New Pasture X",
+      "updatedAt": "2026-05-23T02:00:20.915Z"
     },
     {
       "name": "milo",
