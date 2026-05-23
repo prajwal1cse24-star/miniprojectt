@@ -1187,10 +1187,7 @@ function DashboardView({ app = {}, darkMode, setDarkMode }) {
                 <span className="fl">Last Checked</span>
                 <input className="fi" type="datetime-local" value={animalDraft.lastChecked} onChange={(event) => setAnimalDraft((current) => ({ ...current, lastChecked: event.target.value }))} />
               </label>
-              <label className="fg">
-                <span className="fl">Animal Image URL</span>
-                <input className="fi" value={animalDraft.imageUrl} onChange={(event) => setAnimalDraft((current) => ({ ...current, imageUrl: event.target.value }))} placeholder="https://..." />
-              </label>
+
               <div className="animal-photo-field">
                 <div className="fl">Profile Picture</div>
                 <div className="photo-upload-row">
